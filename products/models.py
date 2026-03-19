@@ -47,10 +47,10 @@ class Extra(models.Model):
 
 # Class Product: CocaCola, Café, Bocadillo, Croissant, etc. 
 class Product(models.Model):
-    name = models.CharField("nombre", max_length=100, default="Producto Nuevo")
-    price = models.DecimalField("precio", max_digits=8, decimal_places=2)
+    name = models.CharField("name", max_length=100, default="Producto Nuevo")
+    price = models.DecimalField("price", max_digits=8, decimal_places=2)
     image = models.ImageField(
-        "imagen",
+        "image",
         upload_to=get_media_products_path,
         null=True,
         blank=True,
@@ -81,12 +81,7 @@ class Product(models.Model):
     class Meta:
         verbose_name = "Producto"
         verbose_name_plural = "Productos"
-        constraints = [
-        models.UniqueConstraint(
-            fields=['product', 'price'],
-            name='unique_product_price'
-        )
-    ]
+        unique_together = ("name", "category")
         ordering = ['name']
 
     def __str__(self):

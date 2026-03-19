@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'core',
     'products',
     'accounts',
+    'zeta',
 ]
 
 MIDDLEWARE = [

@@ -1,4 +1,5 @@
 from django.db import models
+from zeta.models import Zeta
 
 # UBICACIONES (
     # NOMBRE: ENTRADA, PASILLO, SOFA...
@@ -21,3 +22,22 @@ from django.db import models
     # JUNTO O SEPARADO ? -> ABRIR OTRA APP DE COBRO ()
     # CADA CUENTA TENDRÁ ASIGNADA UNA MESA Y UNA MESA PUEDE TENER VARIAS CUENTAS -> CUENTAS-MESAS[N:1]
     #  )
+
+# TICKETS ( 
+    # ID DE CADA TICKET 
+    # ) 
+
+class Ticket(models.Model):
+    # PAYMENT_TYPE = ['VISA', 'CASH', 'TICKET RESTAURANT']
+    PAYMENT_TYPE = [("V", "VISA"),
+                    ("C", "CASH"),
+                    ("T", "TICKET RESTAURANT")]
+    
+    payment_type = models.CharField("Payment type", choices=PAYMENT_TYPE)
+    ticket_datetime = models.DateTimeField("Date and time ticket creation")
+    zeta = models.ForeignKey(
+        Zeta,
+        on_delete=models.PROTECT, # we cannot delete a ticket if
+        related_name='tickets',
+        verbose_name="ticket"
+    )
