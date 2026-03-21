@@ -2,18 +2,19 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 
 
-class User(models.Model):
+class User(AbstractUser):
     PROFILE_OPTIONS = (
         ('admin', 'Admin'),
-        ('encargado', 'Encargado'),
-        ('trabajador', 'Trabajador')
+        ('manager', 'Encargado'),
+        ('worker', 'Trabajador')
     )
 
-    user_permissions = (
+    USER_PERMISSIONS = (
         ('admin', 'Poder absoluto'),
-        ('CRUD', 'Crear, actualizar y eliminar'), 
-        ('Observer', 'Solo observar')
+        ('crud', 'Crear, actualizar y eliminar'), 
+        ('observer', 'Solo observar')
     )
 
-    role = models.CharField(max_length=15, choices=PROFILE_OPTIONS, default='admin')
-    permision = models.CharField(max_length=10, choices=user_permissions, default='CRUD')
+    role = models.CharField(max_length=15, choices=PROFILE_OPTIONS, default='worker')
+    permission = models.CharField(max_length=50, choices=USER_PERMISSIONS, default='crud')
+

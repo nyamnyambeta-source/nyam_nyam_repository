@@ -1,6 +1,6 @@
 from django.db import models
 # Validator to validate image extensions
-from django.core.validators import FileExtensionValidator
+from django.core.validators import FileExtensionValidator, MinValueValidator
 import os
 
 # NOMBRE
@@ -17,7 +17,7 @@ def get_media_products_path(instance, filename):
 # Different categories ['Cafés', 'Bebidas', 'Bocadillos', 'Vitrina', etc.]
 class Category(models.Model):
     name = models.CharField("nombre", max_length=100, unique=True)
-    is_active = models.BooleanField("activa", default=True)
+    active = models.BooleanField("activa", default=True)
 
     class Meta:
         verbose_name = "Categoría"
@@ -31,8 +31,8 @@ class Category(models.Model):
 # Class base of extras, the admin/user/worker can add all extras they want with prices for each one
 class Extra(models.Model):
     name = models.CharField("nombre", max_length=100, unique=True)
-    price = models.DecimalField("precio", max_digits=6, decimal_places=2, default=0)
-    is_active = models.BooleanField("activo", default=True)
+    price = models.DecimalField("precio", max_digits=6, decimal_places=2, validators=[MinValueValidator(0)], default=0)
+    active = models.BooleanField("activo", default=True)
 
     class Meta:
         verbose_name = "Extra"
@@ -49,6 +49,7 @@ class Extra(models.Model):
 class Product(models.Model):
     name = models.CharField("name", max_length=100, default="Producto Nuevo")
     price = models.DecimalField("price", max_digits=8, decimal_places=2)
+    active = models.BooleanField("activo", default=True)
     image = models.ImageField(
         "image",
         upload_to=get_media_products_path,
@@ -64,7 +65,6 @@ class Product(models.Model):
         related_name='products',
         verbose_name="categoría"
     )
-    is_active = models.BooleanField("activo", default=True)
     # description = models.TextField("descripción", blank=True)
 
     # Relationship with Extra (ManyToMany) - One Product can have many extras and one extra can be in many products
@@ -89,6 +89,11 @@ class Product(models.Model):
 
 
 class ProductAllowedExtra(models.Model):
+    required = models.BooleanField("obligatorio", default=False)
+    max_quantity = models.PositiveIntegerField("cantidad máxima", default=1) # in the case of free extra like 'leche fria', 'sacarina' we dont have to specify the quantity 
+                    # but in paid extras can be that a customer wnat 2 extra of cheese 
+    active = models.BooleanField("activo", default=True)
+    
     # Indicates which product is related
     product = models.ForeignKey(
         Product,
@@ -103,10 +108,7 @@ class ProductAllowedExtra(models.Model):
         related_name='product_allowed_extra_links',
         verbose_name="extra"
     )
-    is_required = models.BooleanField("obligatorio", default=False)
-    max_quantity = models.PositiveIntegerField("cantidad máxima", default=1) # in the case of free extra like 'leche fria', 'sacarina' we dont have to specify the quantity 
-                    # but in paid extras can be that a customer wnat 2 extra of cheese 
-    is_active = models.BooleanField("activo", default=True)
+
 
     class Meta:
         verbose_name = "Extra permitido en producto"
