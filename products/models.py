@@ -38,6 +38,7 @@ class Extra(models.Model):
         verbose_name = "Extra"
         verbose_name_plural = "Extras"
         ordering = ['name']
+        unique_together = ("name", "price")
 
     def __str__(self):
         if self.price > 0:
@@ -47,7 +48,7 @@ class Extra(models.Model):
 
 # Class Product: CocaCola, Café, Bocadillo, Croissant, etc. 
 class Product(models.Model):
-    name = models.CharField("name", max_length=100, default="Producto Nuevo")
+    name = models.CharField("name", max_length=100)
     price = models.DecimalField("price", max_digits=8, decimal_places=2)
     active = models.BooleanField("activo", default=True)
     image = models.ImageField(
@@ -61,7 +62,7 @@ class Product(models.Model):
     # Relationship with Category (ManyToOne) - One category can have many products but one product belongs to only one category
     category = models.ForeignKey(
         Category,
-        on_delete=models.PROTECT, # we cannot delete a category if it has related products
+        on_delete=models.PROTECT, # we dont delete the products related to a category
         related_name='products',
         verbose_name="categoría"
     )
@@ -73,7 +74,7 @@ class Product(models.Model):
     allowed_extras = models.ManyToManyField(
         Extra,
         through='ProductAllowedExtra',
-        related_name='allowed_products',
+        related_name='allowed_extras',
         blank=True,
         verbose_name="extras permitidos"
     )
@@ -89,7 +90,7 @@ class Product(models.Model):
 
 
 class ProductAllowedExtra(models.Model):
-    required = models.BooleanField("obligatorio", default=False)
+    # required = models.BooleanField("obligatorio", default=False)
     max_quantity = models.PositiveIntegerField("cantidad máxima", default=1) # in the case of free extra like 'leche fria', 'sacarina' we dont have to specify the quantity 
                     # but in paid extras can be that a customer wnat 2 extra of cheese 
     active = models.BooleanField("activo", default=True)

@@ -1,13 +1,14 @@
 from django.contrib import admin
-from .models import Section, Order, Table, ProductsInOrder
+from .models import Section, Order, Table, OrderItem, OrderItemExtra
 
 admin.site.register(Section)
 #admin.site.register(Order)
 #admin.site.register(Table)
-admin.site.register(ProductsInOrder)
+admin.site.register(OrderItem)
+admin.site.register(OrderItemExtra)
 
 class ProductsInOrderInline(admin.TabularInline):
-    model = ProductsInOrder
+    model = OrderItem
     extra = 1
 
 
