@@ -1,0 +1,20 @@
+<h3>Productos</h3>
+
+<div class="products-grid">
+    {% for product in products %}
+        <button
+            class="product-card"
+            hx-get="{% url 'core:add_product_form' order.id product.id %}"
+            hx-target="#modal-panel"
+            hx-swap="innerHTML"
+        >
+            {% if product.image %}
+                <img src="{{ product.image.url }}" alt="{{ product.name }}">
+            {% endif %}
+            <div class="product-name">{{ product.name }}</div>
+            <div>{{ product.price }} €</div>
+        </button>
+    {% empty %}
+        <p>No hay productos disponibles.</p>
+    {% endfor %}
+</div>

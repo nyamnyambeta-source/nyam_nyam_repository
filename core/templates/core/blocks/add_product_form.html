@@ -1,0 +1,38 @@
+<div class="product-config-box">
+    <h3 style="margin-top: 0;">{{ product.name }}</h3>
+    <p>Selecciona los extras del producto.</p>
+
+    <form
+        hx-post="{% url 'core:add_product_form' order.id product.id %}"
+        hx-target="#order-panel"
+        hx-swap="innerHTML"
+        hx-on::after-request="if(event.detail.successful) this.closest('#modal-panel').innerHTML='';"
+    >
+        {% csrf_token %}
+
+        <div class="extras-grid">
+            {% for allowed_extra in allowed_extras %}
+                <label class="extra-card">
+                    <input type="checkbox" name="extras" value="{{ allowed_extra.id }}">
+                    {{ allowed_extra.extra.name }}
+                    {% if allowed_extra.extra.price %}
+                        <div>+ {{ allowed_extra.extra.price }} €</div>
+                    {% endif %}
+                </label>
+            {% empty %}
+                <p>Este producto no tiene extras configurados.</p>
+            {% endfor %}
+        </div>
+
+        <div class="product-config-actions">
+            <button type="submit" class="btn btn-primary">Añadir</button>
+            <button
+                type="button"
+                class="btn btn-secondary"
+                onclick="document.getElementById('modal-panel').innerHTML='';"
+            >
+                Cancelar
+            </button>
+        </div>
+    </form>
+</div>

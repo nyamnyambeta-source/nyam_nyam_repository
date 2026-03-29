@@ -14,8 +14,8 @@ class ProductsInOrderInline(admin.TabularInline):
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ('id', 'table', 'status', 'created_at')
-    list_filter = ('status', 'created_at')
+    list_display = ('id', 'table', 'created_at')
+    list_filter = ['created_at']
     inlines = [ProductsInOrderInline]
 
 

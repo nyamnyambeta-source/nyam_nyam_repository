@@ -1,0 +1,64 @@
+{% extends "./base.html" %}
+
+{% block content %}
+
+<div class="catalog-column">
+        <div class="panel">
+            <div class="screen-header">
+                <div>
+                    <h2 style="margin: 0;">Mesa {{ table.number }}</h2>
+                    <p style="margin: 6px 0 0 0;">Comanda #{{ order.id }}</p>
+                </div>
+
+                <button
+                    class="btn btn-secondary"
+                    hx-get="{% url 'core:table_map' %}"
+                    hx-target="#main-content"
+                    hx-swap="innerHTML"
+                >
+                    Volver al mapa
+                </button>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h3>Categorías</h3>
+
+            <div class="categories-row">
+                <button
+                    class="category-btn"
+                    hx-get="{% url 'core:category_products' order.id 0 %}"
+                    hx-target="#products-panel"
+                    hx-swap="innerHTML"
+                >
+                    Todas
+                </button>
+
+                {% for category in categories %}
+                    <button
+                        class="category-btn"
+                        hx-get="{% url 'core:category_products' order.id category.id %}"
+                        hx-target="#products-panel"
+                        hx-swap="innerHTML"
+                    >
+                        {{ category.name }}
+                    </button>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div id="products-panel" class="panel">
+            {% include "core/partials/_products_grid.html" %}
+        </div>
+
+        <div id="modal-panel"></div>
+    </div>
+
+    <div class="order-column">
+        <div id="order-panel" class="panel">
+            {% include "core/partials/_order_panel.html" %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}

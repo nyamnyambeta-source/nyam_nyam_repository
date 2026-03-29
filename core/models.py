@@ -25,6 +25,7 @@ class Table(models.Model):
     number = models.PositiveIntegerField("Number of table")
     guests_quantity = models.PositiveIntegerField("Number of guests per table", default=2)
     map_units = models.PositiveSmallIntegerField("Quantity of squares in establishment map", default=1, null=True, blank=True)
+    busy = models.BooleanField("Table busy", default=False)
     section = models.ForeignKey(
         Section,
         on_delete=models.PROTECT, # protect the tables in case of delete section
@@ -53,22 +54,25 @@ class Table(models.Model):
     #  )
 
 class Order(models.Model):
-    STATUS = [
+    '''STATUS = [
         ("O", "OPENED"), 
         ("A", "ACTIVE"),
         ("C", "CLOSED")
-    ]
+    ]'''
     #puede que sea mejor quitarlo y que esta opcion sea valida en ticket; cuando se va a pagar un order -> se crea ticket -> seleccionas metodo de pago
     #payment_type = models.CharField("Payment type", max_length=20, choices=PAYMENT_TYPE) #puede que sea mejor quitarlo y que esta opcion sea valida en ticket
     created_at = models.DateTimeField("Date and time of order created", auto_now_add=True)
-    status = models.CharField("order status", max_length=1, choices=STATUS, default="O")
+    closed_at = models.DateTimeField("Date and time of order closed", null=True, blank=True, default=models.SET_NULL)
+    #status = models.CharField("order status", max_length=1, choices=STATUS, default="O")
     observations = models.TextField("observations", default=" ", blank=True)
 
     table = models.ForeignKey(
         Table, 
         on_delete=models.PROTECT,
         related_name="orders",
-        verbose_name="orders of table"
+        verbose_name="orders of table",
+        null=True,
+        blank=True
     )
 
     class Meta:
@@ -106,6 +110,8 @@ class OrderItem(models.Model):
     
 
 class OrderItemExtra(models.Model):
+    quantity = models.PositiveIntegerField(default=1)
+    
     order_item = models.ForeignKey(
         OrderItem,
         on_delete=models.CASCADE,
