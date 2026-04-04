@@ -99,14 +99,14 @@ class ProductAllowedExtra(models.Model):
     product = models.ForeignKey(
         Product,
         on_delete=models.CASCADE,
-        related_name='product_allowed_extra_links',
+        related_name='allowed_extra_links',
         verbose_name="producto"
     )
     # Indicates which extra is related
     extra = models.ForeignKey(
         Extra,
         on_delete=models.PROTECT,
-        related_name='product_allowed_extra_links',
+        related_name='allowed_in_products',
         verbose_name="extra"
     )
 

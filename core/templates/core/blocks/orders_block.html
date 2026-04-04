@@ -13,18 +13,34 @@
                 {% endif %}
             </div>
 
-            {% if item.selected_extras.all %}
+            {% if item.extras.all %}
                 <div class="line-extras">
                     Extras:
-                    {% for extra in item.selected_extras.all %}
-                        {{ extra.allowed_extra.extra.name }}{% if not forloop.last %}, {% endif %}
+                    {% for extra in item.extras.all %}
+                        {{ extra.allowed_extra.extra.name }}
+                        {% if extra.quantity > 1 %}x{{ extra.quantity }}{% endif %}
+                        {% if not forloop.last %}, {% endif %}
                     {% endfor %}
                 </div>
             {% endif %}
+
+            <div class="line-item-price">
+                Base: {{ item.product.price }} €
+                {% if item.extras.all %}
+                    <br>
+                    Extras: {{ item.extras_total }} €
+                {% endif %}
+                <br>
+                <strong>Total producto: {{ item.total }} €</strong>
+            </div>
         </div>
     {% empty %}
         <p>No hay productos añadidos todavía.</p>
     {% endfor %}
+</div>
+
+<div class="order-total">
+    <strong>Total comanda: {{ order.total }} €</strong>
 </div>
 
 <div class="order-actions">

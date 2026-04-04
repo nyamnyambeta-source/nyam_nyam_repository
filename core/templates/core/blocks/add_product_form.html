@@ -15,13 +15,26 @@
                 <label class="extra-card">
                     <input type="checkbox" name="extras" value="{{ allowed_extra.id }}">
                     {{ allowed_extra.extra.name }}
+
                     {% if allowed_extra.extra.price %}
                         <div>+ {{ allowed_extra.extra.price }} €</div>
                     {% endif %}
+
+                    <input
+                        type="number"
+                        name="quantity_{{ allowed_extra.id }}"
+                        value="1"
+                        min="1"
+                        max="{{ allowed_extra.max_quantity }}"
+                    >
                 </label>
             {% empty %}
                 <p>Este producto no tiene extras configurados.</p>
             {% endfor %}
+        </div>
+
+        <div class="observations-grid">
+            <textarea name="observations" id="observations-area"></textarea>
         </div>
 
         <div class="product-config-actions">

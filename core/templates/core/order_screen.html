@@ -1,0 +1,42 @@
+{% extends "./table_screen.html" %} {% block content %}
+
+<div class="panel">
+  <h3>Categorías</h3>
+
+  <div class="categories-row">
+    <button
+      class="category-btn"
+      hx-get="{% url 'core:category_products' order.id 0 %}"
+      hx-target="#products-panel"
+      hx-swap="innerHTML"
+    >
+      Todas
+    </button>
+
+    {% for category in categories %}
+    <button
+      class="category-btn"
+      hx-get="{% url 'core:category_products' order.id category.id %}"
+      hx-target="#products-panel"
+      hx-swap="innerHTML"
+    >
+      {{ category.name }}
+    </button>
+    {% endfor %}
+  </div>
+
+  <div id="products-panel" class="panel">
+    {% include "core/blocks/products_block.html" %}
+  </div>
+
+  <div id="modal-panel"></div>
+</div>
+
+<div class="order-column">
+  <div id="order-panel" class="panel">
+    {% include "core/blocks/orders_block.html" %}
+  </div>
+</div>
+
+
+{% endblock %}

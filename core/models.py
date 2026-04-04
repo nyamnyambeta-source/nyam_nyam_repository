@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.db import models
 from products.models import Extra, Product, ProductAllowedExtra
 from django.conf import settings
@@ -62,7 +64,7 @@ class Order(models.Model):
     #puede que sea mejor quitarlo y que esta opcion sea valida en ticket; cuando se va a pagar un order -> se crea ticket -> seleccionas metodo de pago
     #payment_type = models.CharField("Payment type", max_length=20, choices=PAYMENT_TYPE) #puede que sea mejor quitarlo y que esta opcion sea valida en ticket
     created_at = models.DateTimeField("Date and time of order created", auto_now_add=True)
-    closed_at = models.DateTimeField("Date and time of order closed", null=True, blank=True, default=models.SET_NULL)
+    closed_at = models.DateTimeField("Date and time of order closed", null=True, blank=True)
     #status = models.CharField("order status", max_length=1, choices=STATUS, default="O")
     observations = models.TextField("observations", default=" ", blank=True)
 
@@ -82,15 +84,19 @@ class Order(models.Model):
 
     def __str__(self):
         return f"Comanda #{self.id} - Mesa {self.table.number}"
+    
+    @property
+    def total(self):
+        return sum((item.total for item in self.items.all()), Decimal("0.00"))
   
 
 class OrderItem(models.Model):
-    sended = models.BooleanField("product order sended", default=False)
-
+    sended = models.BooleanField("order product sended", default=False)
+    observations = models.TextField("observations of order product", max_length=100, null=True, blank=True)
     product = models.ForeignKey(
         Product,
-        on_delete=models.PROTECT,
-        related_name='order_items',
+        on_delete=models.CASCADE,
+        related_name='product_items',
         verbose_name="producto"
     )
 
@@ -108,21 +114,35 @@ class OrderItem(models.Model):
     def __str__(self):
         return f"{self.product.name} - Comanda #{self.order.id}"
     
+    @property
+    def extras_total(self):
+        return sum(
+            (
+                extra.quantity * extra.allowed_extra.extra.price
+                for extra in self.extras.all()
+            ),
+            Decimal("0.00")
+        )
+
+    @property
+    def total(self):
+        return self.product.price + self.extras_total
+    
 
 class OrderItemExtra(models.Model):
     quantity = models.PositiveIntegerField(default=1)
-    
+
     order_item = models.ForeignKey(
         OrderItem,
         on_delete=models.CASCADE,
-        related_name='selected_extras',
+        related_name='extras',
         verbose_name="línea de comanda"
     )
 
     allowed_extra = models.ForeignKey(
         ProductAllowedExtra,
-        on_delete=models.PROTECT,
-        related_name='order_item_extras',
+        on_delete=models.CASCADE,
+        related_name='allowed_extras',
         verbose_name="extra permitido"
     )
 
@@ -132,3 +152,8 @@ class OrderItemExtra(models.Model):
 
     def __str__(self):
         return f"{self.allowed_extra.extra.name} - {self.order_item.product.name}"
+    
+    
+    @property
+    def total(self):
+        return self.allowed_extra.extra.price * self.quantity
