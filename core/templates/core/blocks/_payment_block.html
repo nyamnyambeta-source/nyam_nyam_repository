@@ -1,0 +1,145 @@
+<div class="payment-panel">
+
+  <input type="hidden" id="payment-amount-input"  value="{{ total_pending|floatformat:2 }}">
+  <input type="hidden" id="payment-type-input"    value="cash">
+
+  <div class="amount-label">Importe a cobrar — Mesa {{ order.table.number }}</div>
+  <div class="amount-value" id="amount-display" aria-live="polite">
+    {{ total_pending|floatformat:2 }} €
+  </div>
+
+  <div class="method-row" role="group" aria-label="Método de pago">
+    <button type="button" id="btn-cash" class="method-btn method-btn--active"
+            aria-pressed="true" onclick="selectMethod('cash')">
+      Efectivo
+    </button>
+    <button type="button" id="btn-visa" class="method-btn"
+            aria-pressed="false" onclick="selectMethod('visa')">
+      Tarjeta
+    </button>
+  </div>
+
+  <div class="totals-grid">
+    <div class="total-cell">
+      <span class="total-label">Total</span>
+      <span class="total-value">{{ order.total|floatformat:2 }} €</span>
+    </div>
+    <div class="total-cell">
+      <span class="total-label">Pagado</span>
+      <span class="total-value">{{ total_paid|floatformat:2 }} €</span>
+    </div>
+    <div class="total-cell total-cell--pending">
+      <span class="total-label">Pendiente</span>
+      <span class="total-value">{{ total_pending|floatformat:2 }} €</span>
+    </div>
+  </div>
+
+  {% if payment_success %}
+    <div class="alert alert--success" role="status">Pago registrado correctamente.</div>
+  {% endif %}
+  {% if payment_error %}
+    <div class="alert alert--error" role="alert">Fallo al registrar el pago.</div>
+  {% endif %}
+  <div class="alert alert--success" id="js-alert-success" role="status"  style="display:none">Pago registrado correctamente.</div>
+  <div class="alert alert--error"   id="js-alert-error"   role="alert"   style="display:none">Fallo al registrar el pago.</div>
+
+  <form id="payment-form"
+        hx-post="{% url 'core:create_ticket' order.id %}"
+        hx-target="#main-content"
+        hx-swap="innerHTML"
+        hx-on::after-request="handlePaymentResponse(event)">
+    {% csrf_token %}
+    <input type="hidden" name="amount"        id="form-amount"       value="{{ total_pending|floatformat:2 }}">
+    <input type="hidden" name="payment_type"  id="form-payment-type" value="cash">
+
+    <div class="tpv-keypad">
+      {% for d in "123456789" %}
+        <button type="button" class="key" onclick="addDigit('{{ d }}')">{{ d }}</button>
+      {% endfor %}
+      <button type="button" class="key" onclick="addDecimal()"     aria-label="Decimal">,</button>
+      <button type="button" class="key" onclick="addDigit('0')">0</button>
+      <button type="button" class="key key--del" onclick="removeLastDigit()" aria-label="Borrar">&#8592;</button>
+    </div>
+
+    <div class="tpv-actions">
+      <button type="submit" class="btn-accept">Aceptar</button>
+      <button type="button" class="btn-cancel"
+              hx-get="{% url 'core:order_screen' order.table.id order.id %}"
+              hx-target="#main-content"
+              hx-swap="innerHTML">
+        Cancelar
+      </button>
+    </div>
+
+  </form>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  const INITIAL = "{{ total_pending|floatformat:2 }}".replace(",", ".");
+  let raw = INITIAL;
+  let method = "cash";
+
+  function fmt(v) {
+    const n = parseFloat(v) || 0;
+    return n.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
+  }
+
+  function sync() {
+    document.getElementById("amount-display").textContent  = fmt(raw);
+    document.getElementById("form-amount").value           = (parseFloat(raw) || 0).toFixed(2);
+    document.getElementById("payment-amount-input").value  = (parseFloat(raw) || 0).toFixed(2);
+  }
+
+  window.addDigit = function (d) {
+    if (raw === "0" || raw === "0.00") raw = "";
+    const parts = raw.split(".");
+    if (parts[1] !== undefined && parts[1].length >= 2) return;
+    if ((parts[0] || "").length >= 6 && !raw.includes(".")) return;
+    raw += d;
+    sync();
+  };
+
+  window.addDecimal = function () {
+    if (!raw.includes(".")) raw = (raw || "0") + ".";
+    sync();
+  };
+
+  window.removeLastDigit = function () {
+    raw = raw.slice(0, -1);
+    if (!raw || raw === "-") raw = "0";
+    sync();
+  };
+
+  window.selectMethod = function (m) {
+    method = m;
+    document.getElementById("form-payment-type").value = m;
+    document.getElementById("payment-type-input").value = m;
+
+    const isCash = m === "cash";
+    const bc = document.getElementById("btn-cash");
+    const bv = document.getElementById("btn-visa");
+    bc.classList.toggle("method-btn--active", isCash);
+    bv.classList.toggle("method-btn--active", !isCash);
+    bc.setAttribute("aria-pressed", String(isCash));
+    bv.setAttribute("aria-pressed", String(!isCash));
+  };
+
+  window.handlePaymentResponse = function (event) {
+    const ok = event.detail.successful;
+    document.getElementById("js-alert-success").style.display = ok ? "block" : "none";
+    document.getElementById("js-alert-error").style.display   = ok ? "none"  : "block";
+  };
+
+  document.body.addEventListener("htmx:beforeSwap", function (e) {
+    if (e.detail.xhr.status === 422) {
+      e.detail.shouldSwap = true;
+      e.detail.isError    = false;
+    }
+  });
+
+  sync();
+})();
+</script>

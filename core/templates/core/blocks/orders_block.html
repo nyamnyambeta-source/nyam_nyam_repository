@@ -1,64 +1,81 @@
 <h3>Venta</h3>
 
 <div class="order-lines">
-    {% for item in order.items.all %}
-        <div class="order-line">
-            <div class="order-line-title">{{ item.product.name }}</div>
+  {% for item in order.items.all %}
+  <div class="order-line">
+    <div class="order-line-title">{{ item.product.name }}</div>
 
-            <div class="line-status">
-                {% if item.sended %}
-                    Enviado
-                {% else %}
-                    Pendiente
-                {% endif %}
-            </div>
+    <div class="line-status">
+      {% if item.sended %} Enviado {% else %} Pendiente {% endif %}
+    </div>
 
-            {% if item.extras.all %}
-                <div class="line-extras">
-                    Extras:
-                    {% for extra in item.extras.all %}
-                        {{ extra.allowed_extra.extra.name }}
-                        {% if extra.quantity > 1 %}x{{ extra.quantity }}{% endif %}
-                        {% if not forloop.last %}, {% endif %}
-                    {% endfor %}
-                </div>
-            {% endif %}
+    {% if item.extras.all %}
+    <div class="line-extras">
+      Extras: {% for extra in item.extras.all %}
+      {{extra.allowed_extra.extra.name }} {% if extra.quantity > 1 %} x
+      {{extra.quantity }} {% endif %} {% if not forloop.last %}, {% endif %} 
+      {% endfor %}
+    </div>
+    {% endif %}
 
-            <div class="line-item-price">
-                Base: {{ item.product.price }} €
-                {% if item.extras.all %}
-                    <br>
-                    Extras: {{ item.extras_total }} €
-                {% endif %}
-                <br>
-                <strong>Total producto: {{ item.total }} €</strong>
-            </div>
-        </div>
-    {% empty %}
-        <p>No hay productos añadidos todavía.</p>
-    {% endfor %}
+    <div class="line-item-price">
+      Base: {{ item.product.price }} € {% if item.extras.all %}
+      <br />
+      Extras: {{ item.extras_total }} € {% endif %}
+      <br />
+      <strong>Total producto: {{ item.total }} €</strong>
+    </div>
+  </div>
+  {% empty %}
+  <p>No hay productos añadidos todavía.</p>
+  {% endfor %}
 </div>
 
 <div class="order-total">
-    <strong>Total comanda: {{ order.total }} €</strong>
+  <strong>Total comanda: {{ order.total }} €</strong>
 </div>
 
 <div class="order-actions">
-    <form
-        hx-post="{% url 'core:send_order' order.id %}"
-        hx-target="#order-panel"
-        hx-swap="innerHTML"
-    >
-        {% csrf_token %}
-        <button class="btn btn-warning" type="submit">Enviar pendientes</button>
-    </form>
+  <form
+    hx-post="{% url 'core:send_order' order.id %}"
+    hx-target="#order-panel"
+    hx-swap="innerHTML"
+  >
+    {% csrf_token %}
+    <button class="btn btn-send" type="submit">Enviar pendientes</button>
+  </form>
 
-    <form
-        hx-post="{% url 'core:close_order' order.id %}"
-        hx-target="#main-content"
-        hx-swap="innerHTML"
+  <button
+    class="btn btn-close"
+    type="button"
+    hx-get="{% url 'core:close_order' order.id %}"
+    hx-target="#main-content"
+    hx-swap="innerHTML"
+  >
+    Cerrar comanda
+  </button>
+
+  <form
+    hx-post="{% url 'core:delete_order' order.id %}"
+    hx-target="#main-content"
+    hx-swap="innerHTML"
+  >
+    {% csrf_token %}
+    <button
+      class="btn btn-delete"
+      type="submit"
+      hx-confirm="¿Quieres eliminarla?"
     >
-        {% csrf_token %}
-        <button class="btn btn-success" type="submit">Cerrar comanda</button>
-    </form>
+      Borrar comanda
+    </button>
+  </form>
+
+  <form
+    hx-post="{% url 'core:divide_order' order.id %}"
+    hx-target="#main-content"
+    hx-swap="innerHTML"
+  >
+    {% csrf_token %}
+    <button class="btn btn-divide" type="submit">Dividir comanda</button>
+  </form>
 </div>

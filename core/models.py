@@ -28,6 +28,7 @@ class Table(models.Model):
     guests_quantity = models.PositiveIntegerField("Number of guests per table", default=2)
     map_units = models.PositiveSmallIntegerField("Quantity of squares in establishment map", default=1, null=True, blank=True)
     busy = models.BooleanField("Table busy", default=False)
+    
     section = models.ForeignKey(
         Section,
         on_delete=models.PROTECT, # protect the tables in case of delete section

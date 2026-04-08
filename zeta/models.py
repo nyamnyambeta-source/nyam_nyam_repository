@@ -27,7 +27,8 @@ class Ticket(models.Model):
     payment_type = models.CharField("Payment type", max_length=20, choices=PAYMENT_TYPE)
     ticket_datetime = models.DateTimeField("Date and time ticket creation", auto_now_add=True)
     amount = models.DecimalField("Total amount", default=0, max_digits=10, decimal_places=2, validators=[MinValueValidator(Decimal("0.01"))])
-    
+    #ticket_summary = models.TextField("Ticket summary", max_length=500, blank=False)
+
     zeta = models.ForeignKey(
         Zeta,
         on_delete=models.PROTECT, # protect the tickets in case of delete zeta
@@ -36,7 +37,8 @@ class Ticket(models.Model):
     )
     order = models.ForeignKey(
         'core.Order', 
-        on_delete=models.PROTECT,
+        on_delete=models.SET_NULL,
+        null=True,
         related_name="tickets"
     )
     
@@ -47,3 +49,4 @@ class Ticket(models.Model):
 
     def __str__(self):
         return f"Ticket {self.id} - Order {self.order_id} - {self.amount}€"
+    
