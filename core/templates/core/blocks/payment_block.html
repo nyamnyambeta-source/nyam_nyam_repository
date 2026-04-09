@@ -8,7 +8,7 @@
   </div>
 
   <form
-    hx-post="{% url 'core:create_ticket' order.id %}"
+    hx-post="{% url 'core:create_operation' order.id %}"
     hx-target="#main-content"
     hx-swap="innerHTML"
     class="pay-form"
@@ -17,7 +17,7 @@
 
     <input
       type="hidden"
-      name="amount"
+      name="request_amount"
       id="form-amount"
       value="{{ total_pending|floatformat:2 }}"
     >
@@ -34,7 +34,7 @@
         type="button"
         id="btn-cash"
         class="pay-method-btn pay-method-btn--active"
-        onclick="selectPaymentMethod('cash')"
+        onclick="selectPaymentMethod('CASH')"
       >
         Efectivo
       </button>
@@ -43,7 +43,7 @@
         type="button"
         id="btn-visa"
         class="pay-method-btn"
-        onclick="selectPaymentMethod('visa')"
+        onclick="selectPaymentMethod('VISA')"
       >
         Tarjeta
       </button>
@@ -88,10 +88,23 @@
       <button type="button" class="pay-key" onclick="removeLastDigit()">←</button>
     </div>
 
+    
     <div class="pay-actions">
+      {% if total_pending > 0  %}
       <button type="submit" class="pay-action-btn pay-action-btn--accept">
         Aceptar
       </button>
+      {% else %}
+        <button
+        type="button"
+        class="pay-action-btn pay-action-btn--accept"
+        hx-get="{% url 'core:create_ticket' order.id %}"
+        hx-target="#main-content"
+        hx-swap="innerHTML"
+      >
+        Aceptar
+        </button>
+      {% endif %}
 
       <button
         type="button"
@@ -174,4 +187,4 @@
     syncAmount();
     syncMethod();
   })();
-</script>
+</script>;

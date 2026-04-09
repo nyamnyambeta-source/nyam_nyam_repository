@@ -89,6 +89,40 @@ class Order(models.Model):
     @property
     def total(self):
         return sum((item.total for item in self.items.all()), Decimal("0.00"))
+    
+    def get_ticket_summary(self):
+        return {
+            "order_id": self.id,
+            "table_id": self.table_id,
+            "table_number": self.table.number if self.table else None,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "closed_at": self.closed_at.isoformat() if self.closed_at else None,
+            "observations": self.observations,
+            "items": [
+                {
+                    "order_item_id": item.id,
+                    "product_id": item.product_id,
+                    "product_name": item.product.name,
+                    "product_price": str(item.product.price),
+                    "observations": item.observations,
+                    "extras": [
+                        {
+                            "order_item_extra_id": extra.id,
+                            "extra_id": extra.allowed_extra.extra.id,
+                            "extra_name": extra.allowed_extra.extra.name,
+                            "unit_price": str(extra.allowed_extra.extra.price),
+                            "quantity": extra.quantity,
+                            "total": str(extra.total),
+                        }
+                        for extra in item.extras.all()
+                    ],
+                    "extras_total": str(item.extras_total),
+                    "item_total": str(item.total),
+                }
+                for item in self.items.all()
+            ],
+            "order_total": str(self.total),
+        }
   
 
 class OrderItem(models.Model):

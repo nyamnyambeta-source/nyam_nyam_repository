@@ -8,7 +8,7 @@ from django.db.models import Sum
 
 from core.models import Order, OrderItem, OrderItemExtra, Table
 from products.models import Category, Product, ProductAllowedExtra
-from zeta.models import Ticket, Zeta
+from zeta.models import Operation, Ticket, Zeta
 
 
 def index(request):
@@ -194,7 +194,7 @@ def send_order_view(request, order_id):
 
 
 def get_total_paid(order):
-    return order.tickets.aggregate(
+    return order.operations.aggregate(
         total=Sum("amount")
     )["total"] or Decimal("0.00")
 
@@ -205,6 +205,7 @@ def get_total_pending(order):
 
 def get_active_zeta():
     zeta = Zeta.objects.filter(closed_at__isnull=True).order_by('-opened_at').first()
+    
     if zeta is None:
         zeta = Zeta.objects.create()
     return zeta
@@ -219,6 +220,7 @@ def close_order_view(request, order_id):
 
     total_paid = get_total_paid(order)
     total_pending = order.total - total_paid
+    print(total_pending)
 
     return render(request, "core/blocks/payment_block.html", {
         "order": order,
@@ -228,16 +230,11 @@ def close_order_view(request, order_id):
 
 
 @require_http_methods(["GET", "POST"])
-def create_ticket_view(request, order_id):
+def create_operation_view(request, order_id):
     
     try: 
-        print("ENTRO A CREAR TICKET")
-        order = get_object_or_404(
-            Order.objects.select_related("table").prefetch_related("tickets"),
-            id=order_id
-        )
-        
-        table = Order.objects.get(id=order.table.id)
+        order = Order.objects.get(id=order_id)        
+        table = Table.objects.get(id=order.table.id)
         print(request)
         
         total_paid = get_total_paid(order)
@@ -245,57 +242,81 @@ def create_ticket_view(request, order_id):
         total_pending = order.total - total_paid
         payment_success = False
             
-        if request.method == 'POST':
-            
-            amount_pay = Decimal(request.POST.get('amount'))
+        if request.method == 'POST' and request.POST.get('payment_type') in ('VISA', 'CASH'):
             payment_type = request.POST.get('payment_type')
-            print("AMOUNT: ", amount_pay)
-            
-            # every "sale order" generates a new ticket
+            request_amount = Decimal(request.POST.get('request_amount'))
+            print("AMOUNT: ", request_amount)
+            # every "sale order" generates a new operation
             # one order could have 3 tickets: 
-                # order of 20€ -> 10€ cash; 5€ visa; 5€ cash (every ticket payed for different person)  
-
-            ticket = Ticket.objects.create(
-                payment_type=payment_type,
-                ticket_datetime=datetime.now(),
-                amount=amount_pay,
-                #ticket_summary=order.items.toJSON(),
-                order=order,
-                zeta=get_active_zeta()
-            )
+            # order of 20€ -> 10€ cash; 5€ visa; 5€ cash (every operation payed for different person)  
+            operation = Operation.objects.create(payment_type=payment_type, amount=request_amount, order=order, zeta=get_active_zeta())                        
             
-            payment_success = True if ticket is not None else False
-            
+            if request_amount > 0:
+                if request_amount == total_pending:
+                    total_pending = 0   
+                    total_paid = order.total
+                elif request_amount < total_pending:
+                    total_pending -= request_amount
+                    total_paid += request_amount
+                else:
+                    total_paid = order.total
+                    
+                    if payment_type == 'CASH': 
+                        total_pending -= request_amount
+                        _operation = Operation.objects.create(payment_type, payment_type, amount=total_pending, order=order, zeta=get_active_zeta())
+                    else:
+                        total_pending *= -1
+                        
+                                    
             print("TOTAL PAID: ", total_paid)
             print("TOTAL PENDING: ", total_pending)
-        
-            if total_pending - amount_pay <= 0:
-                orders = table.orders
-                order.delete()
-                total_pending = 0
-                total_paid = order.total
                 
-                return render(request, "core/table_screen.html", {
-                    "table":table,
-                    "orders":orders
-                })
-            else:    
-                return render(request, "core/blocks/payment_block.html", {
-                    "order": order,
-                    "total_paid": total_paid,
-                    "total_pending": total_pending,
-                })
-                
+            return render(request, "core/blocks/payment_block.html", {
+                "order":order,
+                "total_paid":total_paid,
+                "total_pending": total_pending,
+                "payment_success":payment_success,
+            })  
         else:
                         # Falta que devuelva el cambio (hx-get y actualizar el importe #form-amount) 
             return render(request, "core/blocks/payment_block.html", {
                     "order": order,
                     "total_paid": total_paid,
                     "total_pending": total_pending,
-                    "payment_succes":payment_success,
+                    "payment_succes": payment_success,
                 })
+        
     except Exception as e:
         print("ERROR: ", e)
+        
+        
+@require_GET
+def create_ticket_view(request, order_id):
+    
+    try:
+        order = Order.objects.get(id=order_id)
+        visa_amount = order.operations.filter(payment_type='VISA').aggregate(total=Sum("amount"))["total"] or Decimal("0.00")
+        cash_amount = order.operations.filter(payment_type='CASH').aggregate(total=Sum("amount"))["total"] or Decimal("0.00")
+        
+        print("VISA AMOUNT: ", visa_amount)
+        print("CASH AMOUNT: ", cash_amount)
+
+        ticket = Ticket.objects.create(
+            visa_amount=visa_amount,
+            cash_amount=cash_amount, 
+            total_amount=order.total,
+            ticket_summary=order.get_ticket_summary(),
+            order=order,
+        )
+        
+        order.delete()
+        
+        print("Lo borró")
+        tables = Table.objects.select_related("section", "waiter").all()
+        return render(request, "core/map.html", {"tables":tables})
+    
+    except Exception as e:
+        print("erroorooro: ", e)
         
         
 @require_http_methods(["POST"])

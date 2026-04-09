@@ -24,22 +24,27 @@ class Zeta(models.Model):
 # TICKETS ( 
 # ID DE CADA TICKET 
 class Ticket(models.Model):
-    payment_type = models.CharField("Payment type", max_length=20, choices=PAYMENT_TYPE)
+    visa_amount = models.DecimalField("Visa amount", default=0, max_digits=10, decimal_places=2, validators=[MinValueValidator(Decimal("0.01"))])
+    cash_amount = models.DecimalField("Cash amount", default=0, max_digits=10, decimal_places=2, validators=[MinValueValidator(Decimal("0.01"))])
+    total_amount = models.DecimalField("Total amount", default=0, max_digits=10, decimal_places=2, validators=[MinValueValidator(Decimal("0.01"))])
     ticket_datetime = models.DateTimeField("Date and time ticket creation", auto_now_add=True)
-    amount = models.DecimalField("Total amount", default=0, max_digits=10, decimal_places=2, validators=[MinValueValidator(Decimal("0.01"))])
-    #ticket_summary = models.TextField("Ticket summary", max_length=500, blank=False)
+    ticket_summary = models.JSONField() #models.TextField("Ticket summary", max_length=500, blank=False)
 
+    '''
     zeta = models.ForeignKey(
         Zeta,
         on_delete=models.PROTECT, # protect the tickets in case of delete zeta
         related_name='tickets',
-        verbose_name="zeta"
+        verbose_name="Zeta tickets"
     )
+    '''
+
     order = models.ForeignKey(
         'core.Order', 
         on_delete=models.SET_NULL,
         null=True,
-        related_name="tickets"
+        related_name="tickets",
+        verbose_name="Order tickets"
     )
     
     class Meta:
@@ -48,5 +53,33 @@ class Ticket(models.Model):
         ordering = ['-ticket_datetime']
 
     def __str__(self):
-        return f"Ticket {self.id} - Order {self.order_id} - {self.amount}€"
+        return f"Ticket {self.id} - Order {self.order_id} - {self.amount}€ in {self.payment_type}"
     
+    
+
+class Operation(models.Model):
+    payment_type = models.CharField("Payment type", max_length=20, choices=PAYMENT_TYPE)
+    amount = models.DecimalField("Total amount", default=0, max_digits=10, decimal_places=2)
+    operation_datetime = models.DateTimeField("Operation datetime", auto_now_add=True)
+    
+    order = models.ForeignKey(
+        'core.Order',
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='operations'
+    )
+    
+    zeta = models.ForeignKey(
+        Zeta,
+        on_delete=models.PROTECT,
+        related_name='operations',
+        verbose_name="Zeta operations"
+    )
+    
+    class Meta:
+        verbose_name = "Operation"
+        verbose_name_plural = "Operations"
+        ordering = ['-operation_datetime']
+    
+    def __str__(self):
+        return f"Operation {self.id} - {self.amount}€ in {self.payment_type}"
