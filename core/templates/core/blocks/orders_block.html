@@ -71,7 +71,7 @@
   </form>
 
   <form
-    hx-post="{% url 'core:divide_order' order.id %}"
+    hx-get="{% url 'core:divide_order' order.id %}"
     hx-target="#main-content"
     hx-swap="innerHTML"
   >

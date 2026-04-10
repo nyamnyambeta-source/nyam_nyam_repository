@@ -4,12 +4,84 @@ from decimal import Decimal
 from django.shortcuts import get_object_or_404, render, redirect
 from django.views.decorators.http import require_GET, require_http_methods
 from django.http import Http404
-from django.db.models import Sum
+from django.db.models import Q, Sum
+from django.utils.dateparse import parse_date
 
 from core.models import Order, OrderItem, OrderItemExtra, Table
 from products.models import Category, Product, ProductAllowedExtra
 from zeta.models import Operation, Ticket, Zeta
 
+
+def get_active_zeta(zeta_id=None):
+    
+    try:
+        if zeta_id is None or zeta_id == 0:
+            zeta = Zeta.objects.filter(closed_at__isnull=True).order_by('opened_at').first()
+            
+            if zeta is None:
+                zeta = Zeta.objects.create()
+        else:
+            zeta = get_object_or_404(Zeta, id=zeta_id)
+        return zeta
+    
+    except Exception as e:
+        print(e)
+
+@require_GET
+def config_view(request):
+    return render(request, "core/configuration_screen.html")
+
+
+@require_GET
+def operations_view(request, zeta_id):
+    try:
+        print("Entra a operations_view")
+        selected_zeta_id = int(zeta_id)
+        selected_zeta = get_active_zeta(selected_zeta_id) if selected_zeta_id else None
+        zetas = Zeta.objects.all().order_by("-opened_at")
+
+        date_from = request.GET.get("date_from", "")
+        date_to = request.GET.get("date_to", "")
+
+        parsed_date_from = parse_date(date_from)
+        parsed_date_to = parse_date(date_to)
+
+        if parsed_date_from:
+            zetas = zetas.filter(opened_at__date__gte=parsed_date_from)
+
+        if parsed_date_to:
+            zetas = zetas.filter(opened_at__date__lte=parsed_date_to)
+
+        if selected_zeta and zetas.filter(id=selected_zeta.id).exists():
+            operations = selected_zeta.operations.all().order_by("-operation_datetime")
+        else:
+            selected_zeta = None
+            operations = Operation.objects.filter(zeta__in=zetas).order_by("-operation_datetime")
+
+        total_cash_amount = operations.filter(
+            Q(payment_type="C") | Q(payment_type="CASH")
+        ).aggregate(total=Sum("amount"))["total"] or Decimal("0.00")
+        total_visa_amount = operations.filter(
+            Q(payment_type="V") | Q(payment_type="VISA")
+        ).aggregate(total=Sum("amount"))["total"] or Decimal("0.00")
+
+        return render(request, "core/zeta_sales_screen.html", {
+            "zetas": zetas,
+            "selected_zeta": selected_zeta,
+            "operations": operations,
+            "total_cash_amount": total_cash_amount,
+            "total_visa_amount": total_visa_amount,
+            "date_from": date_from,
+            "date_to": date_to,
+        })
+    except Exception as e:
+        print(e)
+        return render(request, "core/configuration_screen.html")
+
+
+@require_GET
+def zeta_view(request, zeta_id):
+    return operations_view(request, zeta_id)
 
 def index(request):
     return render(request, "core/base.html")
@@ -203,14 +275,6 @@ def get_total_pending(order):
     return order.total - get_total_paid(order)
 
 
-def get_active_zeta():
-    zeta = Zeta.objects.filter(closed_at__isnull=True).order_by('-opened_at').first()
-    
-    if zeta is None:
-        zeta = Zeta.objects.create()
-    return zeta
-
-
 @require_GET
 def close_order_view(request, order_id):
     order = get_object_or_404(
@@ -338,23 +402,44 @@ def delete_order_view(request, order_id):
                       {"tables": tables})
 
 
-@require_http_methods(["POST"])
+@require_http_methods(["GET"])
 def divide_order_view(request, order_id):
-    order = get_object_or_404(Order, id=order_id, closed_at__isnull=True)
-    order.closed_at = timezone.now()
-    order.save(update_fields=['closed_at'])
+    order = get_object_or_404(Order, id=order_id)
+    new_order = Order.objects.create(table=order.table)
 
-    tables = Table.objects.select_related('section').all().order_by('section__name', 'number')
-    active_orders = {
-        order.table_id: order.id
-        for order in Order.objects.filter(closed_at__isnull=True)
-    }
-
-    for table in tables:
-        table.active_order = active_orders.get(table.id)
-
-    return render(request, 'core/map.html', {
-        'tables': tables,
+    return render(request, "core/blocks/divide_order_block.html", {
+        "order": order,
+        "new_order":      new_order,
     })
 
 
+@require_http_methods(["POST"])
+def confirm_divided_order_view(request, order_id, new_order_id):
+    order = get_object_or_404(Order, id=order_id)
+    new_order = get_object_or_404(Order, id=new_order_id)
+
+    # IDs de items que el usuario arrastró a la nueva orden
+    moved_item_ids = request.POST.getlist("moved_items")
+
+    if len(moved_item_ids) > 0:
+        # Reasignar los OrderItem seleccionados a la nueva orden
+        order.items.filter(id__in=moved_item_ids).update(order=new_order)
+
+        # Si la nueva orden quedó vacía (el usuario no movió nada), borrarla
+    else:
+        new_order.delete()
+        return render(request, "core/blocks/orders_block.html", {
+            "order":  order,
+        })
+
+    # Si la orden original quedó vacía, borrarla también
+    if not order.items.exists():
+        order.delete()
+
+    table  = new_order.table
+    orders = table.orders.order_by("created_at")
+
+    return render(request, "core/blocks/orders_block.html", {
+           "order":  new_order,
+    })
+    

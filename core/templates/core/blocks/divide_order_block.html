@@ -1,0 +1,139 @@
+{# core/blocks/divide_order_block.html #}
+
+
+<div class="divide-panel">
+
+  <div class="divide-headers">
+    <div>
+      <div class="divide-label">Comanda original</div>
+      <div class="divide-order-id">Venta <strong>#{{ order.id }}</strong></div>
+    </div>
+    <div></div>
+    <div>
+      <div class="divide-label">Nueva comanda</div>
+      <div class="divide-order-id">Venta <strong>#{{ new_order.id }}</strong></div>
+    </div>
+  </div>
+
+  <div class="divide-cols">
+
+    {# ── Columna izquierda: orden original ── #}
+    <div class="divide-col" id="col-left">
+      <div class="col-header">Productos</div>
+
+      {% for item in order.items.all %}
+        <div class="item-card"
+             data-id="{{ item.id }}"
+             onclick="toggleSelect(this)">
+
+          <div class="item-name">{{ item.product.name }}</div>
+
+          {% if item.extras.all %}
+            <div class="item-extras">
+              Extras:
+              {% for extra in item.extras.all %}
+                {{ extra.allowed_extra.extra.name }}{% if extra.quantity > 1 %} x{{ extra.quantity }}{% endif %}{% if not forloop.last %}, {% endif %}
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          <div class="item-price">
+            Base: {{ item.product.price }} €
+            {% if item.extras.all %}
+              &nbsp;|&nbsp; Extras: {{ item.extras_total }} €
+            {% endif %}
+            &nbsp;|&nbsp; <strong>Total: {{ item.total }} €</strong>
+          </div>
+
+        </div>
+      {% empty %}
+        <p class="empty-msg">Sin productos.</p>
+      {% endfor %}
+    </div>
+
+    {# ── Flechas centrales ── #}
+    <div class="divide-arrows">
+      <button type="button" class="arr-btn" onclick="moveSelected('left')"  title="Mover a nueva comanda">&#9654;</button>
+      <button type="button" class="arr-btn" onclick="moveSelected('right')" title="Devolver a original">&#9664;</button>
+    </div>
+
+    {# ── Columna derecha: nueva orden ── #}
+    <div class="divide-col" id="col-right">
+      <div class="col-header">Productos</div>
+      <p class="empty-msg" id="empty-right">Sin productos todavía.</p>
+    </div>
+
+  </div>
+
+  {# ── Acciones ── #}
+  <div class="divide-actions">
+    <button type="button"
+            class="btn-cancel"
+            hx-post="{% url 'core:delete_order' new_order.id %}"
+            hx-target="#main-content"
+            hx-swap="innerHTML">
+      Cancelar
+    </button>
+
+    <form id="divide-form"
+          hx-post="{% url 'core:confirm_divide' order.id new_order.id %}"
+          hx-target="#main-content"
+          hx-swap="innerHTML">
+      {% csrf_token %}
+      <div id="hidden-inputs"></div>
+      <button type="submit" class="btn-accept" onclick="prepareSubmit()">Aceptar</button>
+    </form>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  window.toggleSelect = function (card) {
+    card.classList.toggle("selected");
+  };
+
+  function getCards(colId) {
+    return [...document.querySelectorAll("#" + colId + " .item-card")];
+  }
+
+  function getSelected(colId) {
+    return getCards(colId).filter(c => c.classList.contains("selected"));
+  }
+
+  function refreshEmpty() {
+    const rightCards = getCards("col-right").length;
+    document.getElementById("empty-right").style.display = rightCards === 0 ? "block" : "none";
+  }
+
+  window.moveSelected = function (fromSide) {
+    const fromId = fromSide === "left"  ? "col-left"  : "col-right";
+    const toId   = fromSide === "left"  ? "col-right" : "col-left";
+    const toCol  = document.getElementById(toId);
+
+    getSelected(fromId).forEach(card => {
+      card.classList.remove("selected");
+      toCol.appendChild(card);
+    });
+
+    refreshEmpty();
+  };
+
+  // Inyecta los inputs hidden con los IDs movidos antes del submit
+  window.prepareSubmit = function () {
+    const container = document.getElementById("hidden-inputs");
+    container.innerHTML = "";
+    getCards("col-right").forEach(card => {
+      const input = document.createElement("input");
+      input.type  = "hidden";
+      input.name  = "moved_items";
+      input.value = card.dataset.id;
+      container.appendChild(input);
+    });
+  };
+
+  refreshEmpty();
+})();
+</script>

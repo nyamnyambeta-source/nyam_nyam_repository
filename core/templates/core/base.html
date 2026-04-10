@@ -7,6 +7,14 @@
     <title>COMANDA</title>
   </head>
   <body>
+    <button
+      class="btn config"
+      hx-get="{% url 'core:config' %}"
+      hx-target="#main-content"
+      hx-swap="outerHTML"
+    >
+      Configuration
+    </button>
     <div id="main-content">{% block content %}{% endblock %}</div>
   </body>
 </html>

@@ -1,0 +1,193 @@
+
+<section class="zeta-screen">
+  <div class="zeta-window">
+    <header class="zeta-titlebar">
+      <h2>Movimientos de caja</h2>
+      <button
+        type="button"
+        class="zeta-close-btn"
+        aria-label="Cerrar pantalla de zeta"
+        hx-get="{% url 'core:map' %}"
+        hx-target="#main-content"
+        hx-swap="innerHTML"
+      >
+        X
+      </button>
+    </header>
+
+    <form
+      class="zeta-toolbar"
+      method="get"
+      hx-get="{{ request.path }}"
+      hx-trigger="change from:#zeta-filter-grid"
+      hx-target="#main-content"
+      hx-swap="innerHTML"
+    >
+      <div id="zeta-filter-grid" class="zeta-filter-grid">
+        <div class="zeta-field">
+          <label for="zeta-date-from">Apertura desde</label>
+          <input
+            id="zeta-date-from"
+            type="date"
+            name="date_from"
+            value="{{ date_from }}"
+          >
+        </div>
+
+        <div class="zeta-field">
+          <label for="zeta-date-to">Apertura hasta</label>
+          <input
+            id="zeta-date-to"
+            type="date"
+            name="date_to"
+            value="{{ date_to }}"
+          >
+        </div>
+      </div>
+    </form>
+
+    <main class="zeta-layout">
+      <section class="zeta-panel" aria-labelledby="zeta-list-title">
+        <div class="zeta-panel-header">
+          <div id="zeta-list-title">Informes Zeta</div>
+          <span>{{ zetas|length }} registros</span>
+        </div>
+
+        <div class="zeta-table-wrap">
+          <table class="zeta-table">
+            <thead>
+              <tr>
+                <th style="width: 74px;">Id</th>
+                <th>Fecha apertura</th>
+                <th>Hora</th>
+                <th>Fecha cierre</th>
+                <th>Hora</th>
+                <th class="zeta-money">Importe</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for zeta in zetas %}
+                <tr class="{% if selected_zeta and selected_zeta.id == zeta.id %}is-selected{% endif %}">
+                  <td class="zeta-number">{{ zeta.id }}</td>
+                  <td>{{ zeta.opened_at|date:"d/m/Y" }}</td>
+                  <td>{{ zeta.opened_at|time:"H:i:s" }}</td>
+                  <td>
+                    {% if zeta.closed_at %}
+                      {{ zeta.closed_at|date:"d/m/Y" }}
+                    {% else %}
+                      -
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if zeta.closed_at %}
+                      {{ zeta.closed_at|time:"H:i:s" }}
+                    {% else %}
+                      -
+                    {% endif %}
+                  </td>
+                  <td class="zeta-money">{{ zeta.total_amount|default:"0.00"|floatformat:2 }} EUR</td>
+                </tr>
+              {% empty %}
+                <tr>
+                  <td colspan="6" class="zeta-empty">No hay zetas para el filtro seleccionado.</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="zeta-summary-grid">
+        <div class="zeta-panel" aria-labelledby="zeta-summary-title">
+          <div class="zeta-panel-header">
+            <div id="zeta-summary-title">Resumen por modo de pago</div>
+            {% if selected_zeta %}
+              <span>Zeta #{{ selected_zeta.id }}</span>
+            {% else %}
+              <span>Sin zeta seleccionada</span>
+            {% endif %}
+          </div>
+
+          <div class="zeta-table-wrap">
+            <table class="zeta-table">
+              <thead>
+                <tr>
+                  <th>Modo pago</th>
+                  <th class="zeta-money">Importe</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>CASH</td>
+                  <td class="zeta-money">
+                    {% if total_cash_amount %}
+                      {{ total_cash_amount|floatformat:2 }} EUR
+                    {% elif selected_zeta and selected_zeta.total_cash_amount %}
+                      {{ selected_zeta.total_cash_amount|floatformat:2 }} EUR
+                    {% else %}
+                      0.00 EUR
+                    {% endif %}
+                  </td>
+                </tr>
+                <tr>
+                  <td>VISA</td>
+                  <td class="zeta-money">
+                    {% if total_visa_amount %}
+                      {{ total_visa_amount|floatformat:2 }} EUR
+                    {% elif selected_zeta and selected_zeta.total_visa_amount %}
+                      {{ selected_zeta.total_visa_amount|floatformat:2 }} EUR
+                    {% else %}
+                      0.00 EUR
+                    {% endif %}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="zeta-panel" aria-labelledby="zeta-operations-title">
+        <div class="zeta-panel-header">
+          <div id="zeta-operations-title">Detalle de operaciones</div>
+          <span>{{ operations|length }} movimientos</span>
+        </div>
+
+        <div class="zeta-table-wrap">
+          <table class="zeta-table">
+            <thead>
+              <tr>
+                <th style="width: 120px;">Fecha</th>
+                <th style="width: 100px;">Hora</th>
+                <th class="zeta-money" style="width: 130px;">Importe</th>
+                <th style="width: 120px;">Modo</th>
+                <th style="width: 150px;">Zeta</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for operation in operations %}
+                <tr>
+                  <td>{{ operation.operation_datetime|date:"d/m/Y" }}</td>
+                  <td>{{ operation.operation_datetime|time:"H:i:s" }}</td>
+                  <td class="zeta-money">{{ operation.amount|floatformat:2 }} EUR</td>
+                  <td>{{ operation.get_payment_type_display|default:operation.payment_type }}</td>
+                  <td>
+                    {% if operation.zeta_id %}
+                      Zeta #{{ operation.zeta_id }}
+                    {% else %}
+                      -
+                    {% endif %}
+                  </td>
+                </tr>
+              {% empty %}
+                <tr>
+                  <td colspan="5" class="zeta-empty">No hay operaciones para el filtro seleccionado.</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+</section>

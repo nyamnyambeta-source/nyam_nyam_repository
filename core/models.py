@@ -62,16 +62,15 @@ class Order(models.Model):
         ("A", "ACTIVE"),
         ("C", "CLOSED")
     ]'''
-    #puede que sea mejor quitarlo y que esta opcion sea valida en ticket; cuando se va a pagar un order -> se crea ticket -> seleccionas metodo de pago
-    #payment_type = models.CharField("Payment type", max_length=20, choices=PAYMENT_TYPE) #puede que sea mejor quitarlo y que esta opcion sea valida en ticket
     created_at = models.DateTimeField("Date and time of order created", auto_now_add=True)
     closed_at = models.DateTimeField("Date and time of order closed", null=True, blank=True)
+    #para controlar estados de una orden (desde panel de cocina por ejemplo)
     #status = models.CharField("order status", max_length=1, choices=STATUS, default="O")
     observations = models.TextField("observations", default=" ", blank=True)
 
     table = models.ForeignKey(
         Table, 
-        on_delete=models.PROTECT,
+        on_delete=models.CASCADE,
         related_name="orders",
         verbose_name="orders of table",
         null=True,

@@ -1,0 +1,32 @@
+{% extends "./base.html" %}
+
+{% block content %}
+
+<div id="config-options">
+    
+    <div id="zeta-inform">
+        <button
+            class="btn zeta-inform" 
+            hx-get="{% url 'core:zeta_inform' 0 %}"
+            hx-target="#main-content"
+            hx-swap="innerHTML"
+            >
+            Informe ZETA
+        </button>
+    </div>
+    <div id="btn sales">
+        <button
+            class="btn sales" 
+            hx-get="{% url 'core:operations' 0 %}"
+            hx-target="#main-content"
+            hx-swap="innerHTML"
+            >
+            VENTAS
+        </button>
+
+    </div>
+
+    
+</div>
+
+{% endblock %}
