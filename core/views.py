@@ -292,6 +292,8 @@ def add_product_form_view(request, order_id, product_id):
         selected_extra_ids = request.POST.getlist('extras')
         observations = request.POST.get('observations', '').strip()
 
+        # SI ES EDITAR 
+        
         order_item = OrderItem.objects.create(
             order=order,
             product=product,
@@ -428,7 +430,7 @@ def create_operation_view(request, order_id):
                     
                     if payment_type == 'CASH': 
                         total_pending -= request_amount
-                        _operation = Operation.objects.create(payment_type, payment_type, amount=total_pending, order=order, zeta=get_active_zeta())
+                        _operation = Operation.objects.create(payment_type=payment_type, amount=total_pending, order=order, zeta=get_active_zeta())
                     else:
                         total_pending *= -1
                         

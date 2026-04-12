@@ -22,12 +22,15 @@
       hx-swap="innerHTML"
     >
       {% csrf_token %}
-      <button
-        class="btn close-zeta"
-        type="submit"
-      >
-        CERRAR ZETA
-      </button>
+      <button class="btn close-zeta" type="submit">CERRAR ZETA</button>
     </form>
+    <button
+      class="btn btn-secondary"
+      hx-get="{% url 'core:map' %}"
+      hx-target="#main-content"
+      hx-swap="innerHTML"
+    >
+      Volver al mapa
+    </button>
   </div>
 </div>

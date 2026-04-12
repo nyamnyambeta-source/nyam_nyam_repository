@@ -4,6 +4,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.8/dist/htmx.min.js"></script>
     <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+    <style>
+      {% include "core/styles/styles.css" %}
+    </style>
     <title>COMANDA</title>
   </head>
   <body>
@@ -14,6 +17,14 @@
       hx-swap="innerHTML"
     >
       Configuration
+    </button>
+      <button
+      class="btn config"
+      hx-get="{% url 'core:config' %}"
+      hx-target="#main-content"
+      hx-swap="innerHTML"
+    >
+      ADMIN
     </button>
     <div id="main-content">
       {% if content_template %}

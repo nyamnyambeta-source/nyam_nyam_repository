@@ -1,67 +1,69 @@
-<div class="catalog-column">
-  <div class="panel">
-    <div class="screen-header">
-      <div>
-        <button
-          class="btn btn-secondary"
-          hx-get="{% url 'core:map' %}"
-          hx-target="#main-content"
-          hx-swap="innerHTML"
-        >
-          Volver al mapa
-        </button>
-        <h2>Mesa {{ table.number }}</h2>
-        <div id="orders-panel">
-          {% for table_order in orders %}
+<section class="screen-layout">
+  <div class="catalog-column">
+    <div class="panel">
+      <div class="screen-header">
+        <div>
           <button
-            class="category-btn"
-            hx-get="{% url 'core:order_screen' table.id table_order.id %}"
+            class="btn btn-secondary"
+            hx-get="{% url 'core:map' %}"
             hx-target="#main-content"
             hx-swap="innerHTML"
           >
-            Order {{ table_order.id }}
+            Volver al mapa
           </button>
-          {% endfor %}
+          <h2>Mesa {{ table.number }}</h2>
+          <div id="orders-panel">
+            {% for table_order in orders %}
+            <button
+              class="category-btn{% if table_order.id == order.id %} is-active{% endif %}"
+              hx-get="{% url 'core:order_screen' table.id table_order.id %}"
+              hx-target="#main-content"
+              hx-swap="innerHTML"
+            >
+              Order {{ table_order.id }}
+            </button>
+            {% endfor %}
+          </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <div class="panel">
-    <h3>Categorias</h3>
+    <div class="panel">
+      <h3>Categorias</h3>
 
-    <div class="categories-row">
-      <button
-        class="category-btn"
-        hx-get="{% url 'core:category_products' order.id 0 %}"
-        hx-target="#products-panel"
-        hx-swap="innerHTML"
-      >
-        Todas
-      </button>
+      <div class="categories-row">
+        <button
+          class="category-btn"
+          hx-get="{% url 'core:category_products' order.id 0 %}"
+          hx-target="#products-panel"
+          hx-swap="innerHTML"
+        >
+          Todas
+        </button>
 
-      {% for category in categories %}
-      <button
-        class="category-btn"
-        hx-get="{% url 'core:category_products' order.id category.id %}"
-        hx-target="#products-panel"
-        hx-swap="innerHTML"
-      >
-        {{ category.name }}
-      </button>
-      {% endfor %}
+        {% for category in categories %}
+        <button
+          class="category-btn"
+          hx-get="{% url 'core:category_products' order.id category.id %}"
+          hx-target="#products-panel"
+          hx-swap="innerHTML"
+        >
+          {{ category.name }}
+        </button>
+        {% endfor %}
+      </div>
+
+      <div id="products-panel" class="panel panel--nested">
+        {% include "core/blocks/products_block.html" %}
+      </div>
+
+      <div id="modal-panel"></div>
     </div>
+  </div>
 
-    <div id="products-panel" class="panel">
-      {% include "core/blocks/products_block.html" %}
+  <div class="order-column">
+    <div id="order-panel" class="panel">
+      {% include "core/blocks/orders_block.html" %}
     </div>
-
-    <div id="modal-panel"></div>
   </div>
-</div>
-
-<div class="order-column">
-  <div id="order-panel" class="panel">
-    {% include "core/blocks/orders_block.html" %}
-  </div>
-</div>
+</section>
