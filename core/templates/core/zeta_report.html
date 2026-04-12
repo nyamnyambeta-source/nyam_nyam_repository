@@ -1,0 +1,165 @@
+<<section class="zeta-report">
+  <div class="zeta-report__window">
+    <header class="zeta-report__header">
+      <div class="zeta-report__title">
+        <h2>
+          {% if zeta %}
+            Informe Zeta #{{ zeta.id }}
+          {% else %}
+            Informe Zeta
+          {% endif %}
+        </h2>
+        <p>
+          Resumen de caja y movimientos del turno.
+        </p>
+      </div>
+
+      <div class="zeta-report__actions">
+        <button
+          type="button"
+          class="zeta-report__btn"
+          hx-get="{% url 'core:config' %}"
+          hx-target="#main-content"
+          hx-swap="innerHTML"
+        >
+          Volver
+        </button>
+        <button
+          type="button"
+          class="zeta-report__btn"
+          hx-get="{% url 'core:operations' zeta.id|default:0 %}"
+          hx-target="#main-content"
+          hx-swap="innerHTML"
+        >
+          Ver ventas
+        </button>
+      </div>
+    </header>
+
+    <main class="zeta-report__body">
+      {% if zeta %}
+      <section class="zeta-report__meta">
+        <article class="zeta-report__card">
+          <span class="zeta-report__label">Apertura</span>
+          <div class="zeta-report__value">{{ zeta.opened_at|date:"d/m/Y" }}</div>
+          <div>{{ zeta.opened_at|time:"H:i:s" }}</div>
+        </article>
+
+        <article class="zeta-report__card">
+          <span class="zeta-report__label">Cierre</span>
+          <div class="zeta-report__value">
+            {% if zeta.closed_at %}
+              {{ zeta.closed_at|date:"d/m/Y" }}
+            {% else %}
+              Pendiente
+            {% endif %}
+          </div>
+          <div>
+            {% if zeta.closed_at %}
+              {{ zeta.closed_at|time:"H:i:s" }}
+            {% else %}
+              -
+            {% endif %}
+          </div>
+        </article>
+
+        <article class="zeta-report__card">
+          <span class="zeta-report__label">Operaciones</span>
+          <div class="zeta-report__value">{{ total_operations }}</div>
+          <div class="zeta-report__status {% if zeta.closed_at %}zeta-report__status--closed{% else %}zeta-report__status--open{% endif %}">
+            {% if zeta.closed_at %}Zeta cerrada{% else %}Zeta abierta{% endif %}
+          </div>
+        </article>
+
+        <article class="zeta-report__card">
+          <span class="zeta-report__label">Total</span>
+          <div class="zeta-report__value">{{ total_amount|floatformat:2 }} EUR</div>
+          <div>Caja total del periodo</div>
+        </article>
+      </section>
+
+      <section class="zeta-report__grid">
+        <section class="zeta-report__panel">
+          <div class="zeta-report__panel-header">
+            <div>Resumen por modo de pago</div>
+            <span>Zeta #{{ zeta.id }}</span>
+          </div>
+
+          <div class="zeta-report__table-wrap">
+            <table class="zeta-report__table">
+              <thead>
+                <tr>
+                  <th>Modo</th>
+                  <th class="zeta-report__money">Importe</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>CASH</td>
+                  <td class="zeta-report__money">{{ total_cash_amount|floatformat:2 }} EUR</td>
+                </tr>
+                <tr>
+                  <td>VISA</td>
+                  <td class="zeta-report__money">{{ total_visa_amount|floatformat:2 }} EUR</td>
+                </tr>
+                <tr>
+                  <td>TOTAL</td>
+                  <td class="zeta-report__money">{{ total_amount|floatformat:2 }} EUR</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="zeta-report__panel">
+          <div class="zeta-report__panel-header">
+            <div>Datos del informe</div>
+            <span>Sin empleados ni facturas extrema</span>
+          </div>
+
+          <div class="zeta-report__table-wrap">
+            <table class="zeta-report__table">
+              <tbody>
+                <tr>
+                  <th>Id Zeta</th>
+                  <td>#{{ zeta.id }}</td>
+                </tr>
+                <tr>
+                  <th>Apertura</th>
+                  <td>{{ zeta.opened_at|date:"d/m/Y" }} {{ zeta.opened_at|time:"H:i:s" }}</td>
+                </tr>
+                <tr>
+                  <th>Cierre</th>
+                  <td>
+                    {% if zeta.closed_at %}
+                      {{ zeta.closed_at|date:"d/m/Y" }} {{ zeta.closed_at|time:"H:i:s" }}
+                    {% else %}
+                      Pendiente
+                    {% endif %}
+                  </td>
+                </tr>
+                <tr>
+                  <th>Numero de operaciones</th>
+                  <td>{{ total_operations }}</td>
+                </tr>
+                <tr>
+                  <th>Total en efectivo</th>
+                  <td>{{ total_cash_amount|floatformat:2 }} EUR</td>
+                </tr>
+                <tr>
+                  <th>Total en tarjeta</th>
+                  <td>{{ total_visa_amount|floatformat:2 }} EUR</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </section>      
+      {% else %}
+      <div class="zeta-report__panel">
+        <div class="zeta-report__empty">No hay ninguna zeta disponible para mostrar.</div>
+      </div>
+      {% endif %}
+    </main>
+  </div>
+</section>

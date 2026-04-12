@@ -3,36 +3,39 @@
 <div class="order-lines">
   {% for item in order.items.all %}
   <div class="order-line">
-    <div class="order-line-title">{{ item.product.name }}</div>
-
-    <div class="line-status">
-      {% if item.sended %} Enviado {% else %} Pendiente {% endif %}
-    </div>
+    <div class="order-line-title">{{ item.product.name }} - {{ item.product.price }}€</div>
 
     {% if item.extras.all %}
     <div class="line-extras">
-      Extras: {% for extra in item.extras.all %}
-      {{extra.allowed_extra.extra.name }} {% if extra.quantity > 1 %} x
-      {{extra.quantity }} {% endif %} {% if not forloop.last %}, {% endif %} 
+      <div>Extras:</div>
+      {% for extra in item.extras.all %}
+      <div>
+        {{ extra.allowed_extra.extra.name }}
+        {% if extra.quantity > 1 %}x {{ extra.quantity }}{% endif %}
+        -
+        {{ extra.allowed_extra.extra.price }}€
+        {% if extra.quantity > 1 %}
+        = {{ extra.total }}€
+        {% endif %}
+      </div>
       {% endfor %}
     </div>
     {% endif %}
 
-    <div class="line-item-price">
-      Base: {{ item.product.price }} € {% if item.extras.all %}
-      <br />
-      Extras: {{ item.extras_total }} € {% endif %}
-      <br />
-      <strong>Total producto: {{ item.total }} €</strong>
+    <div class="line-status">
+      {% if item.sended %}Enviado{% else %}Pendiente{% endif %}
     </div>
+
+    <strong>Total producto: {{ item.total }}€</strong>
   </div>
+
   {% empty %}
   <p>No hay productos añadidos todavía.</p>
   {% endfor %}
 </div>
 
 <div class="order-total">
-  <strong>Total comanda: {{ order.total }} €</strong>
+  <strong>Total comanda: {{ order.total }}€</strong>
 </div>
 
 <div class="order-actions">
@@ -64,7 +67,7 @@
     <button
       class="btn btn-delete"
       type="submit"
-      hx-confirm="¿Quieres eliminarla?"
+      hx-confirm="Quieres eliminarla?"
     >
       Borrar comanda
     </button>

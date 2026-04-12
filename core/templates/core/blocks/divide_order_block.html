@@ -1,5 +1,172 @@
 {# core/blocks/divide_order_block.html #}
 
+<style>
+/* ── Divide panel ─────────────────────────────────────── */
+.divide-panel {
+  padding: 1.25rem;
+  font-family: var(--font-sans, sans-serif);
+}
+
+.divide-headers {
+  display: grid;
+  grid-template-columns: 1fr 48px 1fr;
+  margin-bottom: 1rem;
+}
+
+.divide-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--color-text-secondary, #666);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 2px;
+}
+
+.divide-order-id {
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--color-text-primary, #111);
+}
+
+/* ── Grid de columnas ─────────────────────────────────── */
+.divide-cols {
+  display: grid;
+  grid-template-columns: 1fr 48px 1fr;
+  align-items: start;
+  gap: 0;
+}
+
+.divide-col {
+  background: var(--color-background-primary, #fff);
+  border: 0.5px solid var(--color-border-tertiary, #ddd);
+  border-radius: var(--border-radius-lg, 12px);
+  min-height: 320px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.col-header {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--color-text-tertiary, #999);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 4px 4px 8px;
+  border-bottom: 0.5px solid var(--color-border-tertiary, #ddd);
+  margin-bottom: 2px;
+}
+
+/* ── Tarjeta de producto ──────────────────────────────── */
+.item-card {
+  border: 0.5px solid var(--color-border-tertiary, #ddd);
+  border-radius: var(--border-radius-md, 8px);
+  padding: 10px 12px;
+  cursor: pointer;
+  user-select: none;
+  transition: border-color 0.12s, background 0.12s;
+}
+
+.item-card:hover {
+  background: var(--color-background-secondary, #f5f5f5);
+}
+
+.item-card.selected {
+  border: 2px solid #378ADD;
+  background: #E6F1FB;
+}
+
+.item-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-primary, #111);
+}
+
+.item-extras {
+  font-size: 12px;
+  color: var(--color-text-secondary, #666);
+  margin-top: 2px;
+}
+
+.item-price {
+  font-size: 12px;
+  color: var(--color-text-tertiary, #999);
+  margin-top: 4px;
+}
+
+.empty-msg {
+  font-size: 13px;
+  color: var(--color-text-tertiary, #999);
+  padding: 12px;
+  text-align: center;
+}
+
+/* ── Flechas centrales ────────────────────────────────── */
+.divide-arrows {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding-top: 120px;
+}
+
+.arr-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 0.5px solid var(--color-border-secondary, #ccc);
+  background: var(--color-background-primary, #fff);
+  color: var(--color-text-secondary, #666);
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.arr-btn:hover {
+  background: var(--color-background-secondary, #f5f5f5);
+}
+
+/* ── Acciones ─────────────────────────────────────────── */
+.divide-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 1.25rem;
+  justify-content: flex-end;
+}
+
+.btn-accept {
+  padding: 12px 28px;
+  font-size: 14px;
+  font-weight: 500;
+  border: none;
+  border-radius: var(--border-radius-md, 8px);
+  background: #639922;
+  color: #EAF3DE;
+  cursor: pointer;
+}
+
+.btn-accept:hover {
+  opacity: 0.9;
+}
+
+.btn-cancel {
+  padding: 12px 20px;
+  font-size: 14px;
+  border: 0.5px solid var(--color-border-secondary, #ccc);
+  border-radius: var(--border-radius-md, 8px);
+  background: var(--color-background-primary, #fff);
+  color: var(--color-text-secondary, #666);
+  cursor: pointer;
+}
+
+.btn-cancel:hover {
+  background: var(--color-background-secondary, #f5f5f5);
+}
+</style>
 
 <div class="divide-panel">
 

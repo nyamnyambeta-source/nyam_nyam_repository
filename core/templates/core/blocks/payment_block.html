@@ -32,20 +32,19 @@
     <div class="pay-methods">
       <button
         type="button"
-        id="btn-cash"
-        class="pay-method-btn pay-method-btn--active"
-        onclick="selectPaymentMethod('CASH')"
-      >
-        Efectivo
-      </button>
-
-      <button
-        type="button"
         id="btn-visa"
         class="pay-method-btn"
         onclick="selectPaymentMethod('VISA')"
       >
         Tarjeta
+      </button>
+      <button
+        type="button"
+        id="btn-cash"
+        class="pay-method-btn pay-method-btn--active"
+        onclick="selectPaymentMethod('CASH')"
+      >
+        Efectivo
       </button>
     </div>
 
@@ -122,7 +121,7 @@
 <script>
   (function () {
     let raw = "{{ total_pending|floatformat:2 }}".replace(",", ".");
-    let selectedMethod = "cash";
+    let selectedMethod = "VISA";
 
     function formatAmount(value) {
       const number = parseFloat(value) || 0;
@@ -144,8 +143,8 @@
       const cashBtn = document.getElementById("btn-cash");
       const visaBtn = document.getElementById("btn-visa");
 
-      cashBtn.classList.toggle("pay-method-btn--active", selectedMethod === "cash");
-      visaBtn.classList.toggle("pay-method-btn--active", selectedMethod === "visa");
+      cashBtn.classList.toggle("pay-method-btn--active", selectedMethod === "CASH");
+      visaBtn.classList.toggle("pay-method-btn--active", selectedMethod === "VISA");
     }
 
     window.addDigit = function (digit) {

@@ -1,21 +1,35 @@
-from datetime import datetime, timezone
+from datetime import datetime
 from decimal import Decimal
 
 from django.shortcuts import get_object_or_404, render, redirect
-from django.views.decorators.http import require_GET, require_http_methods
+from django.views.decorators.http import require_GET, require_POST, require_http_methods
 from django.http import Http404
 from django.db.models import Q, Sum
 from django.utils.dateparse import parse_date
+from django.utils import timezone
+from django.urls import reverse
 
 from core.models import Order, OrderItem, OrderItemExtra, Table
 from products.models import Category, Product, ProductAllowedExtra
 from zeta.models import Operation, Ticket, Zeta
 
 
+def render_screen(request, template_name, context=None):
+    context = context or {}
+
+    if request.headers.get("HX-Request") == "true":
+        return render(request, template_name, context)
+
+    return render(request, "core/base.html", {
+        **context,
+        "content_template": template_name,
+    })
+
+
 def get_active_zeta(zeta_id=None):
     
     try:
-        if zeta_id is None or zeta_id == 0:
+        if zeta_id is None or int(zeta_id) == 0:
             zeta = Zeta.objects.filter(closed_at__isnull=True).order_by('opened_at').first()
             
             if zeta is None:
@@ -27,17 +41,51 @@ def get_active_zeta(zeta_id=None):
     except Exception as e:
         print(e)
 
+
+def get_report_zeta(zeta_id=None):
+    if zeta_id is None or int(zeta_id) == 0:
+        return Zeta.objects.order_by("-opened_at").first()
+
+    return get_object_or_404(Zeta, id=zeta_id)
+
+
+def get_zeta_operations(zeta):
+    if zeta is None:
+        return Operation.objects.none()
+
+    return zeta.operations.select_related("order").order_by("-operation_datetime")
+
+
+def get_zeta_totals(zeta):
+    operations = get_zeta_operations(zeta)
+    total_operations = operations.count()
+    total_cash_amount = operations.filter(
+        Q(payment_type="C") | Q(payment_type="CASH")
+    ).aggregate(total=Sum("amount"))["total"] or Decimal("0.00")
+    total_visa_amount = operations.filter(
+        Q(payment_type="V") | Q(payment_type="VISA")
+    ).aggregate(total=Sum("amount"))["total"] or Decimal("0.00")
+    total_amount = operations.aggregate(total=Sum("amount"))["total"] or Decimal("0.00")
+
+    return {
+        "operations": operations,
+        "total_operations": total_operations,
+        "total_cash_amount": total_cash_amount,
+        "total_visa_amount": total_visa_amount,
+        "total_amount": total_amount,
+    }
+
+
 @require_GET
 def config_view(request):
-    return render(request, "core/configuration_screen.html")
+    return render_screen(request, "core/configuration_screen.html")
 
 
 @require_GET
 def operations_view(request, zeta_id):
     try:
         print("Entra a operations_view")
-        selected_zeta_id = int(zeta_id)
-        selected_zeta = get_active_zeta(selected_zeta_id) if selected_zeta_id else None
+        selected_zeta = get_active_zeta(zeta_id)
         zetas = Zeta.objects.all().order_by("-opened_at")
 
         date_from = request.GET.get("date_from", "")
@@ -65,7 +113,7 @@ def operations_view(request, zeta_id):
             Q(payment_type="V") | Q(payment_type="VISA")
         ).aggregate(total=Sum("amount"))["total"] or Decimal("0.00")
 
-        return render(request, "core/zeta_sales_screen.html", {
+        return render_screen(request, "core/zeta_sales_screen.html", {
             "zetas": zetas,
             "selected_zeta": selected_zeta,
             "operations": operations,
@@ -81,7 +129,57 @@ def operations_view(request, zeta_id):
 
 @require_GET
 def zeta_view(request, zeta_id):
-    return operations_view(request, zeta_id)
+    zeta = get_report_zeta(zeta_id)
+    totals = get_zeta_totals(zeta)
+
+    return render_screen(request, "core/zeta_report.html", {
+        "zeta": zeta,
+        "operations": totals["operations"],
+        "total_operations": totals["total_operations"],
+        "total_cash_amount": totals["total_cash_amount"],
+        "total_visa_amount": totals["total_visa_amount"],
+        "total_amount": totals["total_amount"],
+    })
+
+
+@require_POST
+def close_zeta_view(request, zeta_id):
+    zeta = get_active_zeta(zeta_id)
+
+    if zeta is None:
+        return redirect("core:config")
+
+    totals = get_zeta_totals(zeta)
+
+    if zeta.closed_at is None:
+        zeta.closed_at = timezone.now()
+
+    zeta.total_operations = totals["total_operations"]
+    zeta.total_cash_amount = totals["total_cash_amount"]
+    zeta.total_visa_amount = totals["total_visa_amount"]
+    zeta.total_amount = totals["total_amount"]
+    zeta.save(update_fields=[
+        "closed_at",
+        "total_operations",
+        "total_cash_amount",
+        "total_visa_amount",
+        "total_amount",
+    ])
+
+    if request.headers.get("HX-Request") == "true":
+        response = render(request, "core/zeta_report.html", {
+            "zeta": zeta,
+            "operations": totals["operations"],
+            "total_operations": totals["total_operations"],
+            "total_cash_amount": totals["total_cash_amount"],
+            "total_visa_amount": totals["total_visa_amount"],
+            "total_amount": totals["total_amount"],
+        })
+        response["HX-Push-Url"] = reverse("core:zeta_inform", args=[zeta.id])
+        return response
+
+    return redirect("core:zeta_inform", zeta_id=zeta.id)
+
 
 def index(request):
     return render(request, "core/base.html")
@@ -94,7 +192,7 @@ def table_map_view(request):
 
         open_orders = Order.objects.filter(closed_at__isnull=True)
 
-        return render(request, "core/map.html", {
+        return render_screen(request, "core/map.html", {
             'tables': tables,
             'open_orders': open_orders,
         })
@@ -108,7 +206,7 @@ def table_screen_view(request, table_id):
     print("TABLE ID ", table_id)
     try:
         table = get_object_or_404(Table, id=table_id)
-        orders = Order.objects.filter(table=table, closed_at__isnull=True).order_by('created_at')
+        orders = Order.objects.filter(table_id=table.id, closed_at__isnull=True).order_by('created_at')
 
         if not orders:
             new_order = Order.objects.create(
@@ -120,7 +218,8 @@ def table_screen_view(request, table_id):
 
         print("ANtes de return")
 
-        return render(request, 'core/table_screen.html', {
+        print(orders)
+        return render_screen(request, 'core/table_screen.html', {
             'table': table,
             'orders': orders,
         })
@@ -134,13 +233,15 @@ def order_screen_view(request, table_id, order_id):
     try:
         print("Ha entrado a ORDER_SCREEN_VIEW")
         table = Table.objects.get(id=table_id)
-        order = Order.objects.get(id=order_id)        
+        order = Order.objects.get(id=order_id)
+        orders = Order.objects.filter(table=table, closed_at__isnull=True).order_by('created_at')
         categories = Category.objects.filter(active=True).order_by('name')
         products = Product.objects.filter(active=True).select_related('category').order_by('name')
         
-        return render(request, 'core/order_screen.html', {
+        return render_screen(request, 'core/order_screen.html', {
             'table': table,
             'order': order,
+            'orders': orders,
             'categories': categories,
             'products': products,
         })

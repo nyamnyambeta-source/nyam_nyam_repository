@@ -11,10 +11,16 @@
       class="btn config"
       hx-get="{% url 'core:config' %}"
       hx-target="#main-content"
-      hx-swap="outerHTML"
+      hx-swap="innerHTML"
     >
       Configuration
     </button>
-    <div id="main-content">{% block content %}{% endblock %}</div>
+    <div id="main-content">
+      {% if content_template %}
+        {% include content_template %}
+      {% else %}
+        {% block content %}{% endblock %}
+      {% endif %}
+    </div>
   </body>
 </html>
