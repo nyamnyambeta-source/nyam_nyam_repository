@@ -3,20 +3,25 @@
 <div class="order-lines">
   {% for item in order.items.all %}
   <div class="order-line">
-    <div class="order-line-title">{{ item.product.name }} - {{ item.product.price }}€</div>
+    <button
+      class="btn btn-edit"
+      hx-get="{% url 'core:edit_orderitem' order.id item.id %}"
+      hx-target="#modal-panel"
+      hx-swap="innerHTML"
+    >
+      Editar
+    </button>
+    <div class="order-line-title">
+      {{ item.product.name }} - {{ item.product.price }}€
+    </div>
 
     {% if item.extras.all %}
     <div class="line-extras">
       <div>Extras:</div>
       {% for extra in item.extras.all %}
       <div>
-        {{ extra.allowed_extra.extra.name }}
-        {% if extra.quantity > 1 %}x {{ extra.quantity }}{% endif %}
-        -
-        {{ extra.allowed_extra.extra.price }}€
-        {% if extra.quantity > 1 %}
-        = {{ extra.total }}€
-        {% endif %}
+        {{ extra.allowed_extra.extra.name }} {% if extra.quantity > 1 %}x {{extra.quantity }}{% endif %} 
+        - {{ extra.allowed_extra.extra.price }}€ {%if extra.quantity > 1 %} = {{ extra.total }}€ {% endif %}
       </div>
       {% endfor %}
     </div>
@@ -27,10 +32,24 @@
     </div>
 
     <strong>Total producto: {{ item.total }}€</strong>
+
+    <form
+      hx-post="{% url 'core:delete_orderitem' item.id %}"
+      hx-target="#order-panel"
+      hx-swap="innerHTML"
+    >
+      {% csrf_token %}
+      <button
+        type="submit"
+        class="btn btn-delete"
+      >
+        Borrar Item
+      </button>
+    </form>
   </div>
 
-  {% empty %}
-  <p>No hay productos añadidos todavía.</p>
+    {% empty %}
+    <p>No hay productos añadidos todavía.</p>
   {% endfor %}
 </div>
 
@@ -45,7 +64,12 @@
     hx-swap="innerHTML"
   >
     {% csrf_token %}
-    <button class="btn btn-send" type="submit">Enviar pendientes</button>
+    <button
+      type="submit"
+      class="btn btn-send"
+    >
+      Enviar pendientes
+    </button>
   </form>
 
   <button
@@ -53,23 +77,23 @@
     hx-get="{% url 'core:map' %}"
     hx-target="#main-content"
     hx-swap="innerHTML"
-    >
+  >
     Dejar pendiente
   </button>
-  
-  <form
+
+  <button
+    class="btn btn-divide"
     hx-get="{% url 'core:divide_order' order.id %}"
     hx-target="#main-content"
     hx-swap="innerHTML"
   >
-    {% csrf_token %}
-    <button class="btn btn-divide" type="submit">Dividir comanda</button>
-  </form>
+    Dividir comanda
+  </button>
 
   <button
     class="btn btn-close"
     type="button"
-    hx-get="{% url 'core:close_order' order.id %}"
+    hx-get="{% url 'zeta:close_order' order.id %}"
     hx-target="#main-content"
     hx-swap="innerHTML"
   >
@@ -77,15 +101,14 @@
   </button>
 
   <form
-    hx-post="{% url 'core:delete_order' order.id %}"
+    hx-post="{% url 'core:delete_order' order.id 0 %}"
     hx-target="#main-content"
     hx-swap="innerHTML"
   >
     {% csrf_token %}
-    <button
-      class="btn btn-delete"
+    <button 
       type="submit"
-      hx-confirm="Quieres eliminarla?"
+      class="btn btn-delete"
     >
       Borrar comanda
     </button>

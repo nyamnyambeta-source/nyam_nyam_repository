@@ -10,21 +10,16 @@
     <title>COMANDA</title>
   </head>
   <body>
+    <a href="{% url 'admin:index' %}" class="btn btn-secondary">
+      ADMIN
+    </a>
     <button
       class="btn config"
       hx-get="{% url 'core:config' %}"
       hx-target="#main-content"
       hx-swap="innerHTML"
     >
-      Configuration
-    </button>
-      <button
-      class="btn config"
-      hx-get="{% url 'core:config' %}"
-      hx-target="#main-content"
-      hx-swap="innerHTML"
-    >
-      ADMIN
+      CONFIGURATION
     </button>
     <div id="main-content">
       {% if content_template %}

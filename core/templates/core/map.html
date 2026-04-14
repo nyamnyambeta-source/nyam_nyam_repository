@@ -1,35 +1,29 @@
 <div class="container">
     <h1>Mapa de mesas</h1>
 
-    <div class="tables-grid">
-        {% for table in tables %}
+    <div class="selection-row">
+        <button
+          class="section-btn"
+          hx-get="{% url 'core:get_tables' 0 %}"
+          hx-target="#tables-grid"
+          hx-swap="innerHTML"
+        >
+          Todas
+        </button>
 
-            {% if table.busy %}
-                {% if table.id in open_orders %}
-                    <button
-                        class="table-card busy"
-
-                        hx-get="{% url 'core:table_screen' table.id %}"
-                        hx-target="#main-content"
-                        hx-swap="innerHTML"
-                    >
-                        <div class="table-number">Mesa {{ table.number }}</div>
-                        <div class="meta">Ocupada</div>
-                    </button>
-                {% endif %}
-            {% else %}
-                <button
-                    class="table-card free"
-
-                    hx-get="{% url 'core:table_screen' table.id %}"
-                    hx-target="#main-content"
-                    hx-swap="innerHTML"
-                >
-                    <div class="table-number">Mesa {{ table.number }}</div>
-                    <div class="meta">Libre</div>
-                </button>
-            {% endif %}
-
+        {% for section in sections %}
+        <button
+          class="section-btn"
+          hx-get="{% url 'core:get_tables' section.id %}"
+          hx-target="#tables-grid"
+          hx-swap="innerHTML"
+        >
+          {{ section.name }}
+        </button>     
         {% endfor %}
+    </div>
+
+    <div id="tables-grid" class="tables-grid">
+        {% include "core/blocks/tables_section_block.html" %}
     </div>
 </div>

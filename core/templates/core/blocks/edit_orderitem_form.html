@@ -1,37 +1,35 @@
 <div class="product-config-box">
-    <h3>{{ product.name }}</h3>
+    <h3 style="margin-top: 0;">Editar {{ order_item.product.name }}</h3>
 
     <form
-        hx-post="{% url 'core:add_product_form' order.id product.id %}"
+        hx-post="{% url 'core:edit_orderitem' order.id order_item.id %}"
         hx-target="#order-panel"
         hx-swap="innerHTML"
-        hx-on::after-request="if(event.detail.successful) this.closest('#modal-panel').innerHTML='';"
+        hx-on::after-request="if(event.detail.successful) document.getElementById('modal-panel').innerHTML='';"
     >
         {% csrf_token %}
-        <div class="btn btn-edit-orderitem">
-            <input
-                type="number"
-                name="quantity_orderitem"
-                value="1"
-                min="1"
-                max="30"
-            >
-        </div>
-        <p>Selecciona los extras del producto.</p>
+
+        <p>Modifica los extras y las observaciones del producto.</p>
+
         <div class="extras-grid">
             {% for allowed_extra in allowed_extras %}
                 <label class="extra-card">
-                    <input type="checkbox" name="extras" value="{{ allowed_extra.id }}">
+                    <input
+                        type="checkbox"
+                        name="extras"
+                        value="{{ allowed_extra.id }}"
+                        {% if allowed_extra.is_selected %}checked{% endif %}
+                    >
                     {{ allowed_extra.extra.name }}
 
                     {% if allowed_extra.extra.price %}
-                        <div>+ {{ allowed_extra.extra.price }} €</div>
+                        <div>+ {{ allowed_extra.extra.price }} EUR</div>
                     {% endif %}
 
                     <input
                         type="number"
                         name="quantity_{{ allowed_extra.id }}"
-                        value="1"
+                        value="{{ allowed_extra.selected_quantity }}"
                         min="1"
                         max="{{ allowed_extra.max_quantity }}"
                     >
@@ -42,11 +40,11 @@
         </div>
 
         <div class="observations-grid">
-            <textarea name="observations" id="observations-area"></textarea>
+            <textarea name="observations" id="observations-area">{{ order_item.observations|default_if_none:"" }}</textarea>
         </div>
 
         <div class="product-config-actions">
-            <button type="submit" class="btn btn-primary">Añadir</button>
+            <button type="submit" class="btn btn-primary">Guardar cambios</button>
             <button
                 type="button"
                 class="btn btn-secondary"

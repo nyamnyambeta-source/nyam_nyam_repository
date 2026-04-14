@@ -1,0 +1,29 @@
+{% for table in tables %}
+    {% if table.busy %}
+        {% if table.id in open_orders %}
+            <button
+                class="table-card busy"
+                hx-get="{% url 'core:table_screen' table.id %}"
+                hx-target="#main-content"
+                hx-swap="innerHTML"
+            >
+                <div class="table-number">Mesa {{ table.number }}</div>
+                <div class="meta">Ocupada</div>
+            </button>
+        {% endif %}
+    {% else %}
+        <button
+            class="table-card free"
+            hx-get="{% url 'core:table_screen' table.id %}"
+            hx-target="#main-content"
+            hx-swap="innerHTML"
+        >
+            <div class="table-number">{{ table.number }}</div>
+            <div class="meta">Libre</div>
+        </button>
+    {% endif %}
+{% empty %}
+    <div class="panel">
+        <p>No hay mesas disponibles en esta seccion.</p>
+    </div>
+{% endfor %}

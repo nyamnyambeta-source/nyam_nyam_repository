@@ -44,6 +44,11 @@ class Table(models.Model):
         blank=True,
         limit_choices_to= {'role': 'worker'}
     )
+    
+    def __str__(self):
+        return f"Table n {self.number}; Section {self.section.name}"
+    
+    
 
 
 # CUENTA (

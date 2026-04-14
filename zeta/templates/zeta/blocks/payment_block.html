@@ -1,0 +1,189 @@
+<div class="pay-shell">
+  <div class="pay-panel">
+    <div class="pay-title">
+      IMPORTE A COBRAR - MESA {{ order.table.number }}
+    </div>
+
+    <div class="pay-amount" id="amount-display">
+      {{ total_pending|floatformat:2 }} &euro;
+    </div>
+
+    <form
+      hx-post="{% url 'zeta:create_operation' order.id %}"
+      hx-target="#main-content"
+      hx-swap="innerHTML"
+      class="pay-form"
+    >
+      {% csrf_token %}
+
+      <input
+        type="hidden"
+        name="request_amount"
+        id="form-amount"
+        value="{{ total_pending|floatformat:2 }}"
+      >
+
+      <input
+        type="hidden"
+        name="payment_type"
+        id="form-payment-type"
+        value="cash"
+      >
+
+      <div class="pay-layout">
+        <div class="pay-summary">
+          <div class="pay-methods">
+            <button
+              type="button"
+              id="btn-visa"
+              class="pay-method-btn"
+              onclick="selectPaymentMethod('VISA')"
+            >
+              Tarjeta
+            </button>
+            <button
+              type="button"
+              id="btn-cash"
+              class="pay-method-btn pay-method-btn--active"
+              onclick="selectPaymentMethod('CASH')"
+            >
+              Efectivo
+            </button>
+          </div>
+
+          <div class="pay-totals">
+            <div class="pay-total-card">
+              <div class="pay-total-label">Total</div>
+              <div class="pay-total-value">{{ order.total|floatformat:2 }} &euro;</div>
+            </div>
+
+            <div class="pay-total-card">
+              <div class="pay-total-label">Pagado</div>
+              <div class="pay-total-value">{{ total_paid|floatformat:2 }} &euro;</div>
+            </div>
+
+            <div class="pay-total-card pay-total-card--pending">
+              <div class="pay-total-label">Pendiente</div>
+              <div class="pay-total-value">{{ total_pending|floatformat:2 }} &euro;</div>
+            </div>
+          </div>
+
+          {% if payment_attempted and payment_success %}
+            <div class="pay-alert pay-alert--success">
+              Pago registrado correctamente.
+            </div>
+          {% elif payment_attempted %}
+            <div class="pay-alert pay-alert--error">
+              Fallo al registrar el pago.
+            </div>
+          {% endif %}
+
+          <div class="pay-actions">
+            {% if total_pending > 0 %}
+              <button type="submit" class="pay-action-btn pay-action-btn--accept">
+                Aceptar
+              </button>
+            {% else %}
+              <button
+                type="button"
+                class="pay-action-btn pay-action-btn--accept"
+                hx-get="{% url 'zeta:create_ticket' order.id %}"
+                hx-target="#main-content"
+                hx-swap="innerHTML"
+              >
+                Aceptar
+              </button>
+            {% endif %}
+
+            <button
+              type="button"
+              class="pay-action-btn pay-action-btn--cancel"
+              hx-get="{% url 'core:order_screen' order.table.id order.id %}"
+              hx-target="#main-content"
+              hx-swap="innerHTML"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+
+        <div class="pay-keypad">
+          {% for d in "123456789" %}
+            <button type="button" class="pay-key" onclick="addDigit('{{ d }}')">
+              {{ d }}
+            </button>
+          {% endfor %}
+
+          <button type="button" class="pay-key" onclick="addDecimal()">,</button>
+          <button type="button" class="pay-key" onclick="addDigit('0')">0</button>
+          <button type="button" class="pay-key" onclick="removeLastDigit()">&larr;</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  (function () {
+    let raw = "{{ total_pending|floatformat:2 }}".replace(",", ".");
+    let selectedMethod = "VISA";
+
+    function formatAmount(value) {
+      const number = parseFloat(value) || 0;
+      return number.toLocaleString("es-ES", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }) + " \u20AC";
+    }
+
+    function syncAmount() {
+      const normalized = (parseFloat(raw) || 0).toFixed(2);
+      document.getElementById("amount-display").textContent = formatAmount(normalized);
+      document.getElementById("form-amount").value = normalized;
+    }
+
+    function syncMethod() {
+      document.getElementById("form-payment-type").value = selectedMethod;
+
+      const cashBtn = document.getElementById("btn-cash");
+      const visaBtn = document.getElementById("btn-visa");
+
+      cashBtn.classList.toggle("pay-method-btn--active", selectedMethod === "CASH");
+      visaBtn.classList.toggle("pay-method-btn--active", selectedMethod === "VISA");
+    }
+
+    window.addDigit = function (digit) {
+      if (raw === "0" || raw === "0.00") {
+        raw = "";
+      }
+
+      const parts = raw.split(".");
+      if (parts[1] !== undefined && parts[1].length >= 2) {
+        return;
+      }
+
+      raw += digit;
+      syncAmount();
+    };
+
+    window.addDecimal = function () {
+      if (!raw.includes(".")) {
+        raw = (raw || "0") + ".";
+      }
+      syncAmount();
+    };
+
+    window.removeLastDigit = function () {
+      raw = "0.00";
+      syncAmount();
+    };
+
+    window.selectPaymentMethod = function (method) {
+      selectedMethod = method;
+      syncMethod();
+    };
+
+    syncAmount();
+    syncMethod();
+  })();
+</script>

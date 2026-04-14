@@ -138,6 +138,10 @@
   justify-content: flex-end;
 }
 
+.divide-actions form {
+  margin: 0;
+}
+
 .btn-accept {
   padding: 12px 28px;
   font-size: 14px;
@@ -234,13 +238,17 @@
 
   {# ── Acciones ── #}
   <div class="divide-actions">
-    <button type="button"
-            class="btn-cancel"
-            hx-post="{% url 'core:delete_order' new_order.id %}"
-            hx-target="#main-content"
-            hx-swap="innerHTML">
-      Cancelar
-    </button>
+    <form
+      hx-post="{% url 'core:delete_order' order.id new_order.id %}"
+      hx-target="#main-content"
+      hx-swap="innerHTML"
+    >
+      {% csrf_token %}
+      <button type="submit"
+              class="btn-cancel">
+        Cancelar
+      </button>
+    </form>
 
     <form id="divide-form"
           hx-post="{% url 'core:confirm_divide' order.id new_order.id %}"

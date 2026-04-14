@@ -27,7 +27,7 @@
         <button
           type="button"
           class="zeta-report__btn"
-          hx-get="{% url 'core:operations' zeta.id|default:0 %}"
+          hx-get="{% url 'zeta:operations' zeta.id|default:0 %}"
           hx-target="#main-content"
           hx-swap="innerHTML"
         >

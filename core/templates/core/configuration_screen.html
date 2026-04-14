@@ -2,7 +2,7 @@
   <div id="config-buttonss">
     <button
       class="btn zeta-inform"
-      hx-get="{% url 'core:zeta_inform' 0 %}"
+      hx-get="{% url 'zeta:zeta_inform' 0 %}"
       hx-target="#main-content"
       hx-swap="innerHTML"
     >
@@ -10,14 +10,14 @@
     </button>
     <button
       class="btn sales"
-      hx-get="{% url 'core:operations' 0 %}"
+      hx-get="{% url 'zeta:operations' 0 %}"
       hx-target="#main-content"
       hx-swap="innerHTML"
     >
       VENTAS
     </button>
     <form
-      hx-post="{% url 'core:close_zeta' 0 %}"
+      hx-post="{% url 'zeta:close_zeta' 0 %}"
       hx-target="#main-content"
       hx-swap="innerHTML"
     >
