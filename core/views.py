@@ -29,8 +29,27 @@ def get_map_context():
 
 
 @require_GET
-def config_view(request):
-    return render_screen(request, "core/configuration_screen.html")
+def config_view(request): return render_screen(request, "core/configuration_screen.html")
+
+
+@require_GET
+def kitchen_screen_view(request): return render_screen(request, "core/kitchen_screen.html") 
+
+
+def refresh_orders_view(request):
+    orders = Order.objects.filter(closed_at__isnull=True, items__isnull=False).distinct()#.prefetch_related("products")#.prefetch_related("items","items__extras")#.select_related("table").order_by("table__number").prefetch_related("items")
+    
+    print(orders)
+    
+    #for order in orders:
+        #print(order.id, "; MESA: ", order.table.number, "; ITEMS: ", order.items.all(), "\n")
+    for order in orders:
+        print("ORDER ", order.id)
+        for item in order.items.all():
+            print(item.product)
+        
+    return render_screen(request, "core/blocks/kitchen_pass_orders_block.html", {"orders":orders})
+
 
 
 def index(request):
@@ -150,7 +169,6 @@ def add_product_form_view(request, order_id, product_id):
             order_item = OrderItem.objects.create(
                 order=order,
                 product=product,
-                sended=False,
                 observations=observations,
             )
 
@@ -208,8 +226,8 @@ def add_product_form_view(request, order_id, product_id):
 
 @require_http_methods(["POST"])
 def send_order_view(request, order_id):
-    order = get_object_or_404(Order, id=order_id, closed_at__isnull=True)
-    order.items.filter(sended=False).update(sended=True)
+    order = get_object_or_404(Order, id=order_id)
+    order.items.filter(status="P").update(status="S")
 
     order = Order.objects.prefetch_related(
         "items__product",

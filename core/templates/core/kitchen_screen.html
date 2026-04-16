@@ -1,0 +1,14 @@
+<div class="container">
+    <h1>Panel de cocina</h1>
+
+    <div class="container">
+
+        <button class="btn btn-refresh"
+            hx-get="{% url 'core:refresh_orders' %}"
+            hx-target=#orders-panel
+            hx-swap="innerHTML"
+        >
+            REFRESH
+        </button>
+        <div id="orders-panel"  class="tables-grid">{% include "core/blocks/kitchen_pass_orders_block.html" %}</div>
+</div>

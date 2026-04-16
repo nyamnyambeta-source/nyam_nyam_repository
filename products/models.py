@@ -51,6 +51,7 @@ class Product(models.Model):
     name = models.CharField("name", max_length=100)
     price = models.DecimalField("price", max_digits=8, decimal_places=2)
     active = models.BooleanField("activo", default=True)
+    kitchen = models.BooleanField("Kitchen product", default=False)
     image = models.ImageField(
         "image",
         upload_to=get_media_products_path,
@@ -82,7 +83,7 @@ class Product(models.Model):
     class Meta:
         verbose_name = "Producto"
         verbose_name_plural = "Productos"
-        unique_together = ("name", "category")
+        unique_together = ("name", "category", "price")
         ordering = ['name']
 
     def __str__(self):

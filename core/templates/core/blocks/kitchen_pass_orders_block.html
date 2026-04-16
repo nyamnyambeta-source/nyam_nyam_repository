@@ -1,0 +1,11 @@
+{% for order in orders %}
+    <div class="table-card busy">
+        <strong>MESA {{order.table.number}}</strong>
+        {% for item in order.items.all %}
+            {% if item.product.kitchen %}
+                {{item.product}} <br>
+            {%  endif %}
+        {% endfor %}
+
+    </div>
+{% endfor %}

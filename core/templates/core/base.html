@@ -14,12 +14,28 @@
       ADMIN
     </a>
     <button
-      class="btn config"
+      class="btn btn-secondary"
       hx-get="{% url 'core:config' %}"
       hx-target="#main-content"
       hx-swap="innerHTML"
     >
       CONFIGURATION
+    </button>
+    <button
+      class="btn btn-secondary"
+      hx-get="{% url 'core:kitchen_screen' %}"
+      hx-target="#main-content"
+      hx-swap="innerHTML"
+    >
+      PANEL DE COCINA
+    </button>
+    <button
+      class="btn btn-secondary"
+      hx-get="{% url 'core:map' %}"
+      hx-target="#main-content"
+      hx-swap="innerHTML"
+    >
+      MAPA DE MESAS
     </button>
     <div id="main-content">
       {% if content_template %}

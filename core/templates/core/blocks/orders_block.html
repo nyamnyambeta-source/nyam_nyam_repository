@@ -28,7 +28,7 @@
     {% endif %}
 
     <div class="line-status">
-      {% if item.sended %}Enviado{% else %}Pendiente{% endif %}
+      {% if item.status == "S" %}Enviado{% else %}Pendiente{% endif %}
     </div>
 
     <strong>Total producto: {{ item.total }}€</strong>

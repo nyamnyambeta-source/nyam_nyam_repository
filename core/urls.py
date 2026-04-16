@@ -6,6 +6,11 @@ app_name = "core"
 
 urlpatterns = [
     path('config', views.config_view, name='config'),
+    
+    #kitchen
+    path('kitchen', views.kitchen_screen_view, name='kitchen_screen'),
+    path('kitchen/orders', views.refresh_orders_view, name='refresh_orders'),
+    
 
     # map and tables
     path('', views.index, name="core"),

@@ -6,6 +6,13 @@ from django.conf import settings
 from nyam_nyam_1_0.settings import PAYMENT_TYPE
 from django.core.validators import MinValueValidator
 
+
+STATUS = [
+    ("P", "PENDING"), 
+    ("S", "SENDED"),
+    ("D", "DONE"),
+    ("DE", "DELIVERED")]
+
 # UBICACIONES (
     # NOMBRE: ENTRADA, PASILLO, SOFA...
     # N DE MESAS EN ESA SECCION -> UBICACION-MESAS [1:N] 
@@ -45,6 +52,9 @@ class Table(models.Model):
         limit_choices_to= {'role': 'worker'}
     )
     
+    class Meta():
+        unique_together = ("number", "section")
+    
     def __str__(self):
         return f"Table n {self.number}; Section {self.section.name}"
     
@@ -62,16 +72,11 @@ class Table(models.Model):
     #  )
 
 class Order(models.Model):
-    '''STATUS = [
-        ("O", "OPENED"), 
-        ("A", "ACTIVE"),
-        ("C", "CLOSED")
-    ]'''
     created_at = models.DateTimeField("Date and time of order created", auto_now_add=True)
     closed_at = models.DateTimeField("Date and time of order closed", null=True, blank=True)
     #para controlar estados de una orden (desde panel de cocina por ejemplo)
-    #status = models.CharField("order status", max_length=1, choices=STATUS, default="O")
-    observations = models.TextField("observations", default=" ", blank=True)
+    status = models.CharField("Order status", max_length=2, choices=STATUS, default="P")
+    observations = models.TextField("Observations", default="", blank=True)
 
     table = models.ForeignKey(
         Table, 
@@ -130,7 +135,7 @@ class Order(models.Model):
   
 
 class OrderItem(models.Model):
-    sended = models.BooleanField("order product sended", default=False)
+    status = models.CharField("Order status", max_length=2, choices=STATUS, default="P")
     observations = models.TextField("observations of order product", max_length=100, null=True, blank=True)
     product = models.ForeignKey(
         Product,
