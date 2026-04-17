@@ -8,8 +8,10 @@ urlpatterns = [
     path('config', views.config_view, name='config'),
     
     #kitchen
-    path('kitchen', views.kitchen_screen_view, name='kitchen_screen'),
-    path('kitchen/orders', views.refresh_orders_view, name='refresh_orders'),
+    path('kitchen/', views.kitchen_screen_view, name='kitchen_screen'),
+    path('kitchen/<str:str_type>', views.refresh_orders_view, name='refresh_orders'),
+    path('kitchen/items/<int:item_id>/ok/', views.kitchen_item_ok_view, name='kitchen_item_ok'),
+    path('kitchen/orders/<int:order_id>/ok/', views.kitchen_order_ok_view, name='kitchen_order_ok'),
     
 
     # map and tables

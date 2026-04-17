@@ -35,8 +35,9 @@ def operations_view(request, zeta_id):
         selected_zeta = get_active_zeta(zeta_id)
         zetas = Zeta.objects.all().order_by("-opened_at")
 
+        # last_day = selected_zeta.opened_at.strftime("%d-%m-%Y")
         date_from = request.GET.get("date_from", "")
-        date_to = request.GET.get("date_to", "")
+        date_to = request.GET.get("date_to", "") 
 
         parsed_date_from = parse_date(date_from)
         parsed_date_to = parse_date(date_to)
@@ -69,7 +70,8 @@ def operations_view(request, zeta_id):
             "date_from": date_from,
             "date_to": date_to,
         })
-    except Exception:
+    except Exception as e:
+        print(e)
         return redirect("core:config")
 
 
@@ -148,8 +150,8 @@ def close_order_view(request, order_id):
 
 @require_http_methods(["GET", "POST"])
 def create_operation_view(request, order_id):
+    order = get_object_or_404(Order, id=order_id)
     try:
-        order = Order.objects.get(id=order_id)
         total_paid = get_total_paid(order)
         total_pending = order.total - total_paid
         payment_success = False
@@ -223,8 +225,8 @@ def create_operation_view(request, order_id):
 
 @require_GET
 def create_ticket_view(request, order_id):
+    order = get_object_or_404(Order, id=order_id)
     try:
-        order = Order.objects.get(id=order_id)
         visa_amount = order.operations.filter(
             payment_type__in=("V", "VISA")
         ).aggregate(total=Sum("amount"))["total"] or Decimal("0.00")

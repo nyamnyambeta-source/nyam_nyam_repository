@@ -9,9 +9,6 @@
             Informe Zeta
           {% endif %}
         </h2>
-        <p>
-          Resumen de caja y movimientos del turno.
-        </p>
       </div>
 
       <div class="zeta-report__actions">
@@ -66,7 +63,7 @@
         <article class="zeta-report__card">
           <span class="zeta-report__label">Operaciones</span>
           <div class="zeta-report__value">{{ total_operations }}</div>
-          <div class="zeta-report__status {% if zeta.closed_at %}zeta-report__status--closed{% else %}zeta-report__status--open{% endif %}">
+          <div class="zeta-report__status">
             {% if zeta.closed_at %}Zeta cerrada{% else %}Zeta abierta{% endif %}
           </div>
         </article>

@@ -1,4 +1,30 @@
-<h3>Venta</h3>
+<div class="order-panel-header">
+  
+  <div class="order-quick-actions">
+    <form
+      hx-post="{% url 'core:send_order' order.id %}"
+      hx-target="#order-panel"
+      hx-swap="innerHTML"
+    >
+      {% csrf_token %}
+      <button
+        type="submit"
+        class="btn btn-send"
+      >
+        Enviar pendientes
+      </button>
+    </form>
+
+    <button
+      class="btn btn-sleep-order"
+      hx-get="{% url 'core:map' %}"
+      hx-target="#main-content"
+      hx-swap="innerHTML"
+    >
+      Dejar pendiente
+    </button>
+  </div>
+</div>
 
 <div class="order-lines">
   {% for item in order.items.all %}
@@ -12,7 +38,7 @@
       Editar
     </button>
     <div class="order-line-title">
-      {{ item.product.name }} - {{ item.product.price }}€
+      {{ item.product.name }} - {{ item.product.price }} EUR
     </div>
 
     {% if item.extras.all %}
@@ -20,18 +46,21 @@
       <div>Extras:</div>
       {% for extra in item.extras.all %}
       <div>
-        {{ extra.allowed_extra.extra.name }} {% if extra.quantity > 1 %}x {{extra.quantity }}{% endif %} 
-        - {{ extra.allowed_extra.extra.price }}€ {%if extra.quantity > 1 %} = {{ extra.total }}€ {% endif %}
+        {{ extra.allowed_extra.extra.name }} {% if extra.quantity > 1 %}x {{ extra.quantity }}{% endif %}
+        - {{ extra.allowed_extra.extra.price }} EUR {% if extra.quantity > 1 %}= {{ extra.total }} EUR{% endif %}
       </div>
       {% endfor %}
     </div>
     {% endif %}
 
     <div class="line-status">
-      {% if item.status == "S" %}Enviado{% else %}Pendiente{% endif %}
+      {% if item.status == "S" %}Enviado
+      {% elif item.status == "P" %}Pendiente
+      {% else %}Entregado
+      {% endif %}
     </div>
 
-    <strong>Total producto: {{ item.total }}€</strong>
+    <strong>Total producto: {{ item.total }} EUR</strong>
 
     <form
       hx-post="{% url 'core:delete_orderitem' item.id %}"
@@ -48,39 +77,16 @@
     </form>
   </div>
 
-    {% empty %}
+  {% empty %}
     <p>No hay productos añadidos todavía.</p>
   {% endfor %}
 </div>
 
 <div class="order-total">
-  <strong>Total comanda: {{ order.total }}€</strong>
+  <strong>Total comanda: {{ order.total }} EUR</strong>
 </div>
 
 <div class="order-actions">
-  <form
-    hx-post="{% url 'core:send_order' order.id %}"
-    hx-target="#order-panel"
-    hx-swap="innerHTML"
-  >
-    {% csrf_token %}
-    <button
-      type="submit"
-      class="btn btn-send"
-    >
-      Enviar pendientes
-    </button>
-  </form>
-
-  <button
-    class="btn btn-sleep-order"
-    hx-get="{% url 'core:map' %}"
-    hx-target="#main-content"
-    hx-swap="innerHTML"
-  >
-    Dejar pendiente
-  </button>
-
   <button
     class="btn btn-divide"
     hx-get="{% url 'core:divide_order' order.id %}"
@@ -106,7 +112,7 @@
     hx-swap="innerHTML"
   >
     {% csrf_token %}
-    <button 
+    <button
       type="submit"
       class="btn btn-delete"
     >

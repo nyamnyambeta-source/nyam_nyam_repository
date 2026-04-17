@@ -7,36 +7,51 @@
     <style>
       {% include "core/styles/styles.css" %}
     </style>
-    <title>COMANDA</title>
+    <title>NYAM NYAM</title>
   </head>
   <body>
-    <a href="{% url 'admin:index' %}" class="btn btn-secondary">
-      ADMIN
-    </a>
-    <button
-      class="btn btn-secondary"
-      hx-get="{% url 'core:config' %}"
-      hx-target="#main-content"
-      hx-swap="innerHTML"
-    >
-      CONFIGURATION
-    </button>
-    <button
-      class="btn btn-secondary"
-      hx-get="{% url 'core:kitchen_screen' %}"
-      hx-target="#main-content"
-      hx-swap="innerHTML"
-    >
-      PANEL DE COCINA
-    </button>
-    <button
-      class="btn btn-secondary"
-      hx-get="{% url 'core:map' %}"
-      hx-target="#main-content"
-      hx-swap="innerHTML"
-    >
-      MAPA DE MESAS
-    </button>
+    <header class="app-shell">
+      <div class="app-shell__bar">
+        <div class="app-shell__brand">
+          <span class="app-shell__kicker">Nyam Nyam</span>
+          <span class="app-shell__title">TPV</span>
+        </div>
+
+        <nav class="app-nav">
+          <a href="{% url 'admin:index' %}" class="app-nav__link app-nav__link--admin">
+            ADMIN
+          </a>
+
+          <button
+            class="app-nav__link"
+            hx-get="{% url 'core:config' %}"
+            hx-target="#main-content"
+            hx-swap="innerHTML"
+          >
+            Config
+          </button>
+
+          <button
+            class="app-nav__link"
+            hx-get="{% url 'core:kitchen_screen' %}"
+            hx-target="#main-content"
+            hx-swap="innerHTML"
+          >
+            Panel cocina
+          </button>
+
+          <button
+            class="app-nav__link app-nav__link--primary"
+            hx-get="{% url 'core:map' %}"
+            hx-target="#main-content"
+            hx-swap="innerHTML"
+          >
+            Mesas
+          </button>
+        </nav>
+      </div>
+    </header>
+
     <div id="main-content">
       {% if content_template %}
         {% include content_template %}

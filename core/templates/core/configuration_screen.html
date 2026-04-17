@@ -14,7 +14,7 @@
       hx-target="#main-content"
       hx-swap="innerHTML"
     >
-      VENTAS
+      Ventas
     </button>
     <form
       hx-post="{% url 'zeta:close_zeta' 0 %}"
@@ -22,15 +22,7 @@
       hx-swap="innerHTML"
     >
       {% csrf_token %}
-      <button class="btn close-zeta" type="submit">CERRAR ZETA</button>
+      <button class="btn close-zeta" type="submit">Cerrar ZETA</button>
     </form>
-    <button
-      class="btn btn-secondary"
-      hx-get="{% url 'core:map' %}"
-      hx-target="#main-content"
-      hx-swap="innerHTML"
-    >
-      Volver al mapa
-    </button>
   </div>
 </div>

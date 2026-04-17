@@ -87,7 +87,7 @@ class Product(models.Model):
         ordering = ['name']
 
     def __str__(self):
-        return self.name
+        return f"{self.name}: {self.price}€" + "kitchen" if {self.kitchen} else "barra"
 
 
 class ProductAllowedExtra(models.Model):

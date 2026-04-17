@@ -1,11 +1,82 @@
-{% for order in orders %}
-    <div class="table-card busy">
-        <strong>MESA {{order.table.number}}</strong>
-        {% for item in order.items.all %}
-            {% if item.product.kitchen %}
-                {{item.product}} <br>
-            {%  endif %}
-        {% endfor %}
+<div class="kitchen-toolbar__copy">
+  <h3>{{ panel_type }}</h1>
+</div>
+{% if orders %}
+  <div class="kitchen-orders-grid">
+    {% for order in orders %}
+      {% if order.panel_items %}
+        <article class="kitchen-ticket">
+          <header class="kitchen-ticket__header">
+            <div class="kitchen-ticket__copy">
+              <div class="kitchen-ticket__eyebrow">Comanda #{{ order.id }}</div>
+              <h3>Mesa {{ order.table.number }}</h3>
+              <p>
+                {{ order.panel_items|length }} item{{ order.panel_items|length|pluralize }}
+              </p>
+            </div>
 
-    </div>
-{% endfor %}
+            <form
+              hx-post="{% url 'core:kitchen_order_ok' order.id %}"
+              hx-target="#kitchen-orders-panel"
+              hx-swap="innerHTML"
+              class="kitchen-action-form"
+            >
+              {% csrf_token %}
+              <input type="hidden" name="panel_type" value="{{ type }}">
+              <button type="submit" class="btn kitchen-order-ok-btn">
+                OK Comanda
+              </button>
+            </form>
+          </header>
+
+          <div class="kitchen-ticket__items">
+            {% for item in order.panel_items %}
+              <div class="kitchen-item kitchen-item--{{ item.status|lower }}">
+                <div class="kitchen-item__copy">
+                  <div class="kitchen-item__topline">
+                    <div class="kitchen-item__title">
+                      {{ item.product.name }}
+                    </div>
+
+                    {% if type == "all" %}
+                      <span class="kitchen-station">
+                        {% if item.product.kitchen %}Cocina{% else %}Barra{% endif %}
+                      </span>
+                    {% endif %}
+                  </div>
+
+                  {% if item.extras.all %}
+                    <div class="kitchen-item__extras">
+                      {% for extra in item.extras.all %}
+                        <span class="kitchen-extra-chip">
+                          {{ extra.allowed_extra.extra.name }}{% if extra.quantity > 1 %} x{{ extra.quantity }}{% endif %}
+                        </span>
+                      {% endfor %}
+                    </div>
+                  {% endif %}
+
+                  {% if item.observations %}
+                    <p class="kitchen-item__note">{{ item.observations }}</p>
+                  {% endif %}
+                </div>
+
+                <form
+                  hx-post="{% url 'core:kitchen_item_ok' item.id %}"
+                  hx-target="#kitchen-orders-panel"
+                  hx-swap="innerHTML"
+                  class="kitchen-action-form kitchen-action-form--item"
+                >
+                  {% csrf_token %}
+                  <input type="hidden" name="panel_type" value="{{ type }}"> 
+                  <button type="submit" class="btn kitchen-ok-btn">
+                    OK
+                  </button>
+                </form>
+              </div>
+            {% endfor %}
+          </div>
+        </article>
+      {% endif %}
+    {% endfor %}
+  </div>
+{% endif %}

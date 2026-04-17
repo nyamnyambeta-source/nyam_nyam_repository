@@ -23,8 +23,8 @@ import zeta
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('core/', include('core.urls')),
-    path('products/', include(("products.urls", "products"), namespace="core")),
-    path('zeta/', include(("zeta.urls", "zeta"), namespace="zeta")),
+    path('', include('core.urls')),
+    path('products/', include("products.urls")),
+    path('zeta/', include("zeta.urls")),
     
 ]

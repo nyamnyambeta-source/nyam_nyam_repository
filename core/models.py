@@ -13,22 +13,11 @@ STATUS = [
     ("D", "DONE"),
     ("DE", "DELIVERED")]
 
-# UBICACIONES (
-    # NOMBRE: ENTRADA, PASILLO, SOFA...
-    # N DE MESAS EN ESA SECCION -> UBICACION-MESAS [1:N] 
-    # )
 
 class Section(models.Model):
     name = models.CharField(max_length=100)
     active = models.BooleanField(default=True)
 
-
-# MESAS (
-    # NUMERO MESA, 
-    # NUMEROS COMENSALES REOMENDADO,
-    # -> ? N MESAS EN MAPA [SI ES PARA 1 PERSONA TENDRA 1 UD, SI ES PARA 8 PERSONAS TENDRA 2 UDS], 
-    # CADA MESA TENDRÁ ASIGNADA UNA UBICACION Y UNA UBICACION PODRA TENER MUCHAS MESAS -> MESAS-UBICACIONES [N:1])
-    # CAMARERO ASIGNADO -> MESAS TIENE 1 CAMARERO ASIGNADO Y UN CAMARERO PUEDE TENER VARIAS MESAS; MESAS-CAMARERO [N:1])
 
 class Table(models.Model):
     number = models.PositiveIntegerField("Number of table")
@@ -38,13 +27,13 @@ class Table(models.Model):
     
     section = models.ForeignKey(
         Section,
-        on_delete=models.PROTECT, # protect the tables in case of delete section
+        on_delete=models.PROTECT,
         related_name='tables',
         verbose_name="section's tables"
     )
     waiter = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.PROTECT, # protect the tables in case of delete waiter
+        on_delete=models.PROTECT,
         related_name='tables',
         verbose_name="waiter's tables",
         null=True,
@@ -58,24 +47,12 @@ class Table(models.Model):
     def __str__(self):
         return f"Table n {self.number}; Section {self.section.name}"
     
-    
-
-
-# CUENTA (
-    # ID (CADA CUENTA TENDRA UN ID UNICO, SI UNA CUENTA SE CAMBIA DE UNA MESA A OTRA, MANTIENE SU MISMO ID)
-    # LA CUENTA DE CADA MESA CON LOS PRODUCTOS -> CUENTAS-PRODUCTOS [N:N] 
-        # OPCION A OBSERVACIONES, CAMARERO PUEDA ESCRIBIR ALGO
-        # SI UN PRODUCTO YA SE HA ENVIADO (QUE CAMBIE DE ESTADO : PENDIENTE A ENVIADO)
-    # FORMA DE PAGO (VISA O CASH),
-    # JUNTO O SEPARADO ? -> ABRIR OTRA APP DE COBRO ()
-    # CADA CUENTA TENDRÁ ASIGNADA UNA MESA Y UNA MESA PUEDE TENER VARIAS CUENTAS -> CUENTAS-MESAS[N:1]
-    #  )
 
 class Order(models.Model):
     created_at = models.DateTimeField("Date and time of order created", auto_now_add=True)
     closed_at = models.DateTimeField("Date and time of order closed", null=True, blank=True)
     #para controlar estados de una orden (desde panel de cocina por ejemplo)
-    status = models.CharField("Order status", max_length=2, choices=STATUS, default="P")
+    # status = models.CharField("Order status", max_length=2, choices=STATUS, default="P")
     observations = models.TextField("Observations", default="", blank=True)
 
     table = models.ForeignKey(
@@ -93,7 +70,7 @@ class Order(models.Model):
         ordering = ['-created_at']
 
     def __str__(self):
-        return f"Comanda #{self.id} - Mesa {self.table.number}"
+        return f"Comanda #{self.id} - Mesa {self.table.number}: " + ", ".join(item.__str__() for item in self.items.all())
     
     @property
     def total(self):
@@ -154,9 +131,16 @@ class OrderItem(models.Model):
     class Meta:
         verbose_name = "Productos ordenados dentro de una comanda"
 
-
     def __str__(self):
-        return f"{self.product.name} - Comanda #{self.order.id}"
+        if self.extras.exists():
+            extras_text = ", ".join(
+                extra.allowed_extra.extra.name
+                for extra in self.extras.all()
+            )
+            return f"{self.product.name} -> EXTRAS: [{extras_text}]"
+
+        return f"{self.product.name} -> NO EXTRAS"
+        
     
     @property
     def extras_total(self):
@@ -195,7 +179,7 @@ class OrderItemExtra(models.Model):
         verbose_name_plural = "Extras seleccionados en comanda"
 
     def __str__(self):
-        return f"{self.allowed_extra.extra.name} - {self.order_item.product.name}"
+        return f"{self.allowed_extra.extra.name} "#- {self.order_item.product.name}"
     
     
     @property

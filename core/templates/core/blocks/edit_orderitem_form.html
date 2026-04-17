@@ -14,19 +14,25 @@
         <div class="extras-grid">
             {% for allowed_extra in allowed_extras %}
                 <label class="extra-card">
-                    <input
-                        type="checkbox"
-                        name="extras"
-                        value="{{ allowed_extra.id }}"
-                        {% if allowed_extra.is_selected %}checked{% endif %}
-                    >
-                    {{ allowed_extra.extra.name }}
+                    <div class="extra-card__header">
+                        <div class="extra-card__copy">
+                            <div class="extra-card__name">{{ allowed_extra.extra.name }}</div>
 
-                    {% if allowed_extra.extra.price %}
-                        <div>+ {{ allowed_extra.extra.price }} EUR</div>
-                    {% endif %}
+                            {% if allowed_extra.extra.price %}
+                                <div class="extra-card__price">+ {{ allowed_extra.extra.price }} EUR</div>
+                            {% endif %}
+                        </div>
+
+                        <input
+                            type="checkbox"
+                            name="extras"
+                            value="{{ allowed_extra.id }}"
+                            {% if allowed_extra.is_selected %}checked{% endif %}
+                        >
+                    </div>
 
                     <input
+                        class="extra-card__quantity"
                         type="number"
                         name="quantity_{{ allowed_extra.id }}"
                         value="{{ allowed_extra.selected_quantity }}"

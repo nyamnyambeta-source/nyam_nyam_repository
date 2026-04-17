@@ -1,14 +1,47 @@
-<div class="container">
-    <h1>Panel de cocina</h1>
+<div class="container kitchen-screen">
+  <section class="panel kitchen-panel-shell">
+    <div class="kitchen-toolbar">
 
-    <div class="container">
-
-        <button class="btn btn-refresh"
-            hx-get="{% url 'core:refresh_orders' %}"
-            hx-target=#orders-panel
+      <div class="kitchen-toolbar__actions">
+        <div class="selection-row kitchen-selection">
+          <button
+            type="button"
+            class="category-btn kitchen-filter-btn"
+            hx-get="{% url 'core:refresh_orders' 'kitchen' %}"
+            hx-target="#kitchen-orders-panel"
             hx-swap="innerHTML"
-        >
-            REFRESH
-        </button>
-        <div id="orders-panel"  class="tables-grid">{% include "core/blocks/kitchen_pass_orders_block.html" %}</div>
+          >
+            Cocina
+          </button>
+
+          <button
+            type="button"
+            class="category-btn kitchen-filter-btn"
+            hx-get="{% url 'core:refresh_orders' 'bar' %}"
+            hx-target="#kitchen-orders-panel"
+            hx-swap="innerHTML"
+          >
+            Barra
+          </button>
+
+          <button
+            type="button"
+            class="category-btn kitchen-filter-btn"
+            hx-get="{% url 'core:refresh_orders' 'all' %}"
+            hx-target="#kitchen-orders-panel"
+            hx-swap="innerHTML"
+          >
+            Pase
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div
+      id="kitchen-orders-panel"
+      class="kitchen-orders-panel"
+    >
+      {% include "core/blocks/kitchen_pass_orders_block.html" %}
+    </div>
+  </section>
 </div>

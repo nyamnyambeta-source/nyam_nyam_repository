@@ -1,9 +1,18 @@
 from django.http import Http404
+from django.db.models import Prefetch
 from django.shortcuts import get_object_or_404, redirect, render
-from django.views.decorators.http import require_GET, require_http_methods
+from django.views.decorators.http import require_GET, require_POST, require_http_methods
 
 from core.models import Order, OrderItem, OrderItemExtra, Section, Table
 from products.models import Category, Product, ProductAllowedExtra
+
+
+KITCHEN_SCOPES = {"kitchen", "bar", "all"}
+KITCHEN_PANEL_MAP = {
+    "kitchen": "COCINA",
+    "bar": "BARRA",
+    "all": "PASE",
+}
 
 
 def render_screen(request, template_name, context=None):
@@ -28,27 +37,98 @@ def get_map_context():
     }
 
 
+def sync_table_busy(table_id):
+    has_open_orders = Order.objects.filter(
+        table_id=table_id,
+        closed_at__isnull=True,
+    ).exists()
+    Table.objects.filter(id=table_id).update(busy=has_open_orders)
+    return has_open_orders
+
+
 @require_GET
 def config_view(request): return render_screen(request, "core/configuration_screen.html")
 
 
 @require_GET
-def kitchen_screen_view(request): return render_screen(request, "core/kitchen_screen.html") 
-
-
-def refresh_orders_view(request):
-    orders = Order.objects.filter(closed_at__isnull=True, items__isnull=False).distinct()#.prefetch_related("products")#.prefetch_related("items","items__extras")#.select_related("table").order_by("table__number").prefetch_related("items")
+def kitchen_screen_view(request): return render_screen(request, 'core/kitchen_screen.html')
     
-    print(orders)
     
-    #for order in orders:
-        #print(order.id, "; MESA: ", order.table.number, "; ITEMS: ", order.items.all(), "\n")
-    for order in orders:
-        print("ORDER ", order.id)
-        for item in order.items.all():
-            print(item.product)
+def get_panel_orders_context(str_type=None):
+    try:
+        panel_type = str_type if str_type is not None and str_type!=" " else "all"
+        # Primero preparo los orderItems que quiero
+        panel_items = (
+            OrderItem.objects
+            .select_related("product", "order__table")
+            .filter(status="S")
+        )
         
-    return render_screen(request, "core/blocks/kitchen_pass_orders_block.html", {"orders":orders})
+        # Depende del panel que quiero los filtro
+        if panel_type=='kitchen':
+            panel_items = panel_items.filter(product__kitchen=True)
+        elif panel_type == 'bar':
+            panel_items = panel_items.filter(product__kitchen=False)
+        
+        # Hago un join con Order para tener en un bloque todo
+        orders = (Order.objects.select_related("table")
+                .filter(items__status="S")
+                .prefetch_related(
+                    Prefetch("items", queryset=panel_items, to_attr="panel_items")).distinct()
+                )
+    
+        context = {
+            "type": panel_type,
+            "panel_type": KITCHEN_PANEL_MAP.get(panel_type),
+            "orders": orders,
+        }
+    
+        return context
+        
+    except Exception as e:
+        print(e)
+        return {}
+
+
+@require_GET
+def refresh_orders_view(request, str_type=None):
+    context = get_panel_orders_context(str_type)
+
+    return render_screen(request, 'core/blocks/kitchen_pass_orders_block.html', context)
+    
+    
+@require_POST
+def kitchen_order_ok_view(request, order_id):
+    panel_type = request.POST.get('panel_type')
+
+    
+    order_items = (
+        OrderItem.objects
+        .select_related("product", "order")
+        .filter(status="S", order_id=order_id)
+    ) 
+
+    if panel_type == 'kitchen':
+        order_items = order_items.filter(product__kitchen=True)
+    elif panel_type == 'bar':
+        order_items = order_items.filter(product__kitchen=False)
+            
+    order_items.update(status="D")
+    context = get_panel_orders_context(panel_type)
+    
+    return render(request, "core/blocks/kitchen_pass_orders_block.html", context)
+
+
+@require_POST
+def kitchen_item_ok_view(request, item_id):
+    
+    order_item = get_object_or_404(OrderItem, id=item_id)
+    order_item.status = "D"
+    order_item.save(update_fields=["status"])
+    
+    context = get_panel_orders_context(request.POST.get('panel_type'))
+    
+    return render(request, "core/blocks/kitchen_pass_orders_block.html", context)
 
 
 
@@ -85,47 +165,46 @@ def get_tables_view(request, section_id):
 
 
 def table_screen_view(request, table_id):
-    try:
-        table = get_object_or_404(Table, id=table_id)
-        orders = Order.objects.filter(
-            table_id=table.id,
-            closed_at__isnull=True,
-        ).order_by("created_at")
+    table = get_object_or_404(Table, id=table_id)
+    orders = Order.objects.filter(
+        table_id=table.id,
+        closed_at__isnull=True,
+    ).order_by("created_at")
 
-        if not orders:
-            new_order = Order.objects.create(table=table)
-            orders = [new_order]
+    if not orders:
+        new_order = Order.objects.create(table=table)
+        orders = [new_order]
+    
+    table.busy = sync_table_busy(table.id)
 
-        return render_screen(request, "core/table_screen.html", {
-            "table": table,
-            "orders": orders,
-        })
-    except Exception as e:
-        print("ERROR: ", e)
-        return redirect("core:map")
+    return render_screen(request, "core/table_screen.html", {
+        "table": table,
+        "orders": orders,
+    })
 
 
 def order_screen_view(request, table_id, order_id):
-    try:
-        table = Table.objects.get(id=table_id)
-        order = Order.objects.get(id=order_id)
-        orders = Order.objects.filter(
-            table=table,
-            closed_at__isnull=True,
-        ).order_by("created_at")
-        categories = Category.objects.filter(active=True).order_by("name")
-        products = Product.objects.filter(active=True).select_related("category").order_by("name")
+    table = get_object_or_404(Table, id=table_id)
+    order = get_object_or_404(
+        Order,
+        id=order_id,
+        table=table,
+        closed_at__isnull=True,
+    )
+    orders = Order.objects.filter(
+        table=table,
+        closed_at__isnull=True,
+    ).order_by("created_at")
+    categories = Category.objects.filter(active=True).order_by("name")
+    products = Product.objects.filter(active=True).select_related("category").order_by("name")
 
-        return render_screen(request, "core/order_screen.html", {
-            "table": table,
-            "order": order,
-            "orders": orders,
-            "categories": categories,
-            "products": products,
-        })
-    except Exception as e:
-        print("order_screen_view method: ", e)
-        return redirect("core:map")
+    return render_screen(request, "core/order_screen.html", {
+        "table": table,
+        "order": order,
+        "orders": orders,
+        "categories": categories,
+        "products": products,
+    })
 
 
 def category_products_view(request, order_id, category_id):
@@ -172,10 +251,7 @@ def add_product_form_view(request, order_id, product_id):
                 observations=observations,
             )
 
-            allowed_extras_map = {
-                str(allowed_extra.id): allowed_extra
-                for allowed_extra in allowed_extras
-            }
+            allowed_extras_map = {str(allowed_extra.id): allowed_extra for allowed_extra in allowed_extras}
             extras_to_create = []
 
             for extra_id in selected_extra_ids:
@@ -191,8 +267,7 @@ def add_product_form_view(request, order_id, product_id):
                 except (TypeError, ValueError):
                     quantity = 1
 
-                if quantity < 1:
-                    quantity = 1
+                if quantity < 1: quantity = 1
 
                 if quantity > allowed_extra.max_quantity:
                     quantity = allowed_extra.max_quantity
@@ -243,12 +318,15 @@ def send_order_view(request, order_id):
 def delete_order_view(request, order_id, new_order_id):
     try:
         order = get_object_or_404(Order, id=order_id)
+        table_id = order.table_id
 
         if new_order_id == 0:
             order.delete()
+            sync_table_busy(table_id)
             return render_screen(request, "core/map.html", get_map_context())
 
         get_object_or_404(Order, id=new_order_id).delete()
+        sync_table_busy(table_id)
         return order_screen_view(request, order.table.id, order.id)
     except Exception as e:
         print(e)
@@ -378,6 +456,7 @@ def divide_order_view(request, order_id):
 def confirm_divided_order_view(request, order_id, new_order_id):
     order = get_object_or_404(Order, id=order_id)
     new_order = get_object_or_404(Order, id=new_order_id)
+    table_id = order.table_id
     moved_item_ids = request.POST.getlist("moved_items")
 
     if len(moved_item_ids) > 0:
@@ -390,6 +469,8 @@ def confirm_divided_order_view(request, order_id, new_order_id):
 
     if not order.items.exists():
         order.delete()
+
+    sync_table_busy(table_id)
 
     return render(request, "core/blocks/orders_block.html", {
         "order": new_order,
